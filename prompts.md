@@ -18,3 +18,6 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **#001** | Repository & Documentation Setup (`/prompts.md`, `/README.md`) | Cursor (Claude 3.5 Sonnet) | *"Create a structured Markdown documentation setup for AB Talks ViCodathon containing project architecture, team allocation, and prompt logging templates."* | Public GitHub repository initialized with project docs, README, and prompt logging structure. |
 | **#002** | Interview Setup Screen (`src/app/interview/setup/page.tsx`) | Gemini 1.5 Pro | *"Role: Senior Frontend Engineer & UI/UX Expert. Stack: Next.js 15, React, Tailwind CSS, Lucide React. Task: Build a sleek, modern, Dark-mode Glassmorphic 'Interview Setup & Configuration Screen' for our AI Mock Interview Platform inside app/interview/setup/page.tsx with job role selector, experience level, tech stack input, duration, and stress-free focus mode toggle."* | Built complete dark-mode glassmorphic setup UI with interactive state controls for role, experience, tech stack, and duration. |
+## Log #003 - Interview Workspace Page Layout
+
+**Prompt:** Built dynamic interview workspace page layout with interactive timer, STAR methodology guidance box, focus mode toggle, and answer submit interface.
