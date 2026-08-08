@@ -1,17 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  Briefcase, 
-  Clock, 
-  Sparkles, 
-  Code2, 
-  ArrowRight, 
-  ShieldCheck, 
-  Zap, 
-  CheckCircle2 
-} from "lucide-react";
+import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/ui/Footer";
+import { UserCheck, Code2, Cpu, Users, Sparkles, ArrowRight, Briefcase, Clock, ShieldCheck, Zap, CheckCircle2 } from "lucide-react";
 
 const roles = [
   { id: "frontend", title: "Frontend Engineer", icon: Code2, desc: "React, Next.js, UI Architecture" },
@@ -20,33 +13,68 @@ const roles = [
   { id: "product", title: "Product Manager", icon: Briefcase, desc: "Strategy, PRDs, Roadmap Metrics" },
 ];
 
-const experienceLevels = ["Entry Level", "Mid-Level", "Senior Level"];
 const durationOptions = ["10 mins", "15 mins", "20 mins"];
 
-export default function InterviewSetupPage() {
+const rounds = [
+  {
+    id: "HR & Behavioral",
+    title: "General HR / Behavioral",
+    desc: "Culture fit, self-introduction, conflict resolution, and situational questions.",
+    icon: Users,
+    badge: "Non-Technical",
+  },
+  {
+    id: "Technical Core",
+    title: "Technical Round",
+    desc: "Core domain concepts, framework architecture, and deep technical evaluation.",
+    icon: Cpu,
+    badge: "Domain Specific",
+  },
+  {
+    id: "Coding & DSA",
+    title: "Coding Round",
+    desc: "Data structures, algorithmic problem solving, time complexity, and logic.",
+    icon: Code2,
+    badge: "Problem Solving",
+  },
+  {
+    id: "System Design",
+    title: "System Design",
+    desc: "Scalability, microservices, API architecture, caching, and data modeling.",
+    icon: UserCheck,
+    badge: "Architecture",
+  },
+];
+
+export default function SetupPage() {
   const router = useRouter();
+  
   const [selectedRole, setSelectedRole] = useState("frontend");
-  const [experience, setExperience] = useState("Mid-Level");
+  const [role, setRole] = useState("Frontend Engineer");
+  const [seniority, setSeniority] = useState("Mid-Level");
+  const [selectedRound, setSelectedRound] = useState("Technical Core");
   const [duration, setDuration] = useState("15 mins");
   const [skills, setSkills] = useState("React, Next.js, TypeScript, Tailwind CSS");
   const [focusMode, setFocusMode] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleStartInterview = async () => {
+  const handleStartInterview = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSubmitting(true);
     try {
       const activeRoleObj = roles.find((r) => r.id === selectedRole);
-
+      
       const interviewConfig = {
-        role: activeRoleObj ? activeRoleObj.title : "Software Engineer",
-        seniority: experience,
+        role: activeRoleObj ? activeRoleObj.title : role,
+        seniority: seniority,
         duration: duration,
-        topic: skills,
+        topic: `${selectedRound} - ${skills}`,
         focusMode: focusMode,
         createdAt: new Date().toISOString(),
       };
 
       sessionStorage.setItem("active_interview_config", JSON.stringify(interviewConfig));
+      sessionStorage.removeItem("qa_history");
       router.push("/interview");
     } catch (error) {
       console.error("Failed to initialize session configuration:", error);
@@ -56,21 +84,24 @@ export default function InterviewSetupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-center items-center p-4 md:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between relative overflow-hidden">
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
 
-      <main className="w-full max-w-4xl z-10 space-y-8">
+      <Navbar />
+
+      <main className="flex-1 max-w-4xl mx-auto w-full p-4 md:p-8 space-y-8 z-10 my-auto">
+        {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5" /> AI Interview Suite v1.0
           </div>
-
+          
           <h1 
             className="text-3xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent"
             style={{ backgroundImage: "linear-gradient(to right, #ffffff, #e2e8f0, #94a3b8)" }}
           >
-            Your Mock Interview
+            Configure Your Mock Session
           </h1>
 
           <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto">
@@ -78,20 +109,26 @@ export default function InterviewSetupPage() {
           </p>
         </div>
 
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 md:p-8 space-y-8 shadow-2xl shadow-black/50">
+        {/* Glassmorphism Main Form */}
+        <form onSubmit={handleStartInterview} className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 md:p-8 space-y-8 shadow-2xl shadow-black/50">
+          
+          {/* Target Job Role Selection */}
           <div className="space-y-4">
             <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-indigo-400" /> Select Target Job Role
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {roles.map((role) => {
-                const Icon = role.icon;
-                const isSelected = selectedRole === role.id;
+              {roles.map((r) => {
+                const Icon = r.icon;
+                const isSelected = selectedRole === r.id;
                 return (
                   <button
-                    key={role.id}
+                    key={r.id}
                     type="button"
-                    onClick={() => setSelectedRole(role.id)}
+                    onClick={() => {
+                      setSelectedRole(r.id);
+                      setRole(r.title);
+                    }}
                     className={`flex items-start gap-4 p-4 rounded-xl border text-left transition-all duration-200 ${
                       isSelected
                         ? "bg-indigo-600/15 border-indigo-500/80 shadow-lg shadow-indigo-500/10"
@@ -103,10 +140,10 @@ export default function InterviewSetupPage() {
                     </div>
                     <div className="space-y-1">
                       <div className="font-semibold text-slate-200 text-sm flex items-center justify-between">
-                        {role.title}
+                        {r.title}
                         {isSelected && <CheckCircle2 className="w-4 h-4 text-indigo-400 inline ml-2" />}
                       </div>
-                      <p className="text-xs text-slate-400">{role.desc}</p>
+                      <p className="text-xs text-slate-400">{r.desc}</p>
                     </div>
                   </button>
                 );
@@ -114,27 +151,63 @@ export default function InterviewSetupPage() {
             </div>
           </div>
 
+          {/* Interview Round Selection */}
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-cyan-400" /> Select Interview Round
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {rounds.map((rnd) => {
+                const IconComponent = rnd.icon;
+                const isSelected = selectedRound === rnd.id;
+                return (
+                  <button
+                    key={rnd.id}
+                    type="button"
+                    onClick={() => setSelectedRound(rnd.id)}
+                    className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden flex flex-col justify-between space-y-2 ${
+                      isSelected
+                        ? "bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-500/10"
+                        : "bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className={`p-2 rounded-lg ${isSelected ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-400"}`}>
+                        <IconComponent className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                        {rnd.badge}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className={`text-sm font-semibold ${isSelected ? "text-indigo-300" : "text-slate-200"}`}>
+                        {rnd.title}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                        {rnd.desc}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Seniority Level & Duration */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <Zap className="w-4 h-4 text-cyan-400" /> Experience Level
+                <Zap className="w-4 h-4 text-cyan-400" /> Seniority Level
               </label>
-              <div className="flex bg-slate-950/60 p-1.5 rounded-xl border border-slate-800">
-                {experienceLevels.map((lvl) => (
-                  <button
-                    key={lvl}
-                    type="button"
-                    onClick={() => setExperience(lvl)}
-                    className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
-                      experience === lvl
-                        ? "bg-indigo-600 text-white shadow-md"
-                        : "text-slate-400 hover:text-slate-200"
-                    }`}
-                  >
-                    {lvl}
-                  </button>
-                ))}
-              </div>
+              <select
+                value={seniority}
+                onChange={(e) => setSeniority(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              >
+                <option value="Junior">Entry / Junior Level</option>
+                <option value="Mid-Level">Mid-Level</option>
+                <option value="Senior">Senior / Lead Level</option>
+              </select>
             </div>
 
             <div className="space-y-3">
@@ -160,6 +233,7 @@ export default function InterviewSetupPage() {
             </div>
           </div>
 
+          {/* Core Topics / Technical Stack */}
           <div className="space-y-3">
             <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
               <Code2 className="w-4 h-4 text-violet-400" /> Core Topics / Technical Stack
@@ -173,6 +247,7 @@ export default function InterviewSetupPage() {
             />
           </div>
 
+          {/* Stress-Free Focus Mode Toggle */}
           <div className="flex items-center justify-between p-4 rounded-xl bg-slate-950/40 border border-slate-800/80">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
@@ -194,18 +269,20 @@ export default function InterviewSetupPage() {
             </button>
           </div>
 
+          {/* Action Button */}
           <button
-            type="button"
+            type="submit"
             disabled={isSubmitting}
-            onClick={handleStartInterview}
             className="w-full py-4 rounded-xl text-white font-bold text-base shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 group transition-all duration-200 disabled:opacity-50"
             style={{ backgroundImage: "linear-gradient(to right, #4f46e5, #6366f1, #06b6d4)" }}
           >
-            {isSubmitting ? "Initializing Session..." : "Start AI Interview"} 
+            {isSubmitting ? "Initializing Session..." : "Start AI Interview Session"} 
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
-        </div>
+        </form>
       </main>
+
+      <Footer />
     </div>
   );
 }
