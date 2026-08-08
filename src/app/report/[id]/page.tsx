@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
+import SkillGapRoadmap from "@/components/ui/SkillGapRoadmap";
 import { Trophy, Target, AlertTriangle, ArrowLeft, RefreshCw, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
@@ -13,7 +14,10 @@ export default function CandidateReportPage() {
   useEffect(() => {
     async function evaluateSession() {
       const savedConfig = sessionStorage.getItem("active_interview_config");
+      const savedHistory = sessionStorage.getItem("qa_history");
+
       const parsedConfig = savedConfig ? JSON.parse(savedConfig) : {};
+      const parsedHistory = savedHistory ? JSON.parse(savedHistory) : [];
 
       try {
         const res = await fetch("/api/interview/evaluate", {
@@ -23,9 +27,7 @@ export default function CandidateReportPage() {
             role: parsedConfig.role || "Software Engineer",
             seniority: parsedConfig.seniority || "Mid-Level",
             topic: parsedConfig.topic || "Technical Core",
-            qaHistory: [
-              { question: "Explain state management and optimization in frontend applications.", answer: "Used React hooks and Memoization." }
-            ],
+            qaHistory: parsedHistory,
           }),
         });
 
@@ -116,8 +118,11 @@ export default function CandidateReportPage() {
               </div>
             </div>
 
-            {/* Action CTAs */}
-            <div className="flex justify-center">
+            {/* Skill Gap Roadmap */}
+            <SkillGapRoadmap recommendedTopics={report?.recommendedTopics} />
+
+            {/* Action CTA */}
+            <div className="flex justify-center pt-4">
               <Link
                 href="/interview/setup"
                 className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all shadow-lg shadow-indigo-500/20"
