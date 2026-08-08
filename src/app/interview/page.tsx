@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import VoiceRecorder from "@/components/ui/VoiceRecorder";
+import QuestionTimer from "@/components/ui/QuestionTimer"; // Added Timer Component
 import { Sparkles, Send, ArrowRight } from "lucide-react";
 
 export default function ActiveInterviewPage() {
@@ -15,6 +16,7 @@ export default function ActiveInterviewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [userAnswer, setUserAnswer] = useState("");
   const [questionCount, setQuestionCount] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes countdown timer per question
 
   useEffect(() => {
     const savedConfig = sessionStorage.getItem("active_interview_config");
@@ -27,6 +29,15 @@ export default function ActiveInterviewPage() {
 
     fetchNextQuestion(parsed, "");
   }, [router]);
+
+  // Timer Countdown Effect
+  useEffect(() => {
+    if (loading || submitting) return;
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [loading, submitting]);
 
   const fetchNextQuestion = async (sessionConfig: any, previousAnswer: string) => {
     setLoading(true);
@@ -52,18 +63,19 @@ export default function ActiveInterviewPage() {
       setQuestion(`In the context of ${sessionConfig.topic}, explain how you manage system scalability and edge cases.`);
     } finally {
       setLoading(false);
+      setTimeLeft(120); // Reset timer to 2 mins for new question
     }
   };
 
-  const handleAnswerSubmit = async () => {
-    if (!userAnswer.trim()) return;
-
+  const handleAnswerSubmit = useCallback(async () => {
     setSubmitting(true);
+
+    const answerToSubmit = userAnswer.trim() || "No response provided (Time Expired / Left Blank)";
 
     const existingHistory = JSON.parse(sessionStorage.getItem("qa_history") || "[]");
     const updatedHistory = [
       ...existingHistory,
-      { question: question, answer: userAnswer }
+      { question: question, answer: answerToSubmit }
     ];
     sessionStorage.setItem("qa_history", JSON.stringify(updatedHistory));
 
@@ -72,20 +84,27 @@ export default function ActiveInterviewPage() {
       return;
     }
 
-    const currentAns = userAnswer;
     setUserAnswer("");
     setQuestionCount((prev) => prev + 1);
 
-    await fetchNextQuestion(config, currentAns);
+    await fetchNextQuestion(config, answerToSubmit);
     setSubmitting(false);
-  };
+  }, [userAnswer, question, questionCount, config, router]);
 
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between">
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between relative overflow-hidden">
+      {/* High-Tech Background Glow Effects */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+      {/* Sticky High Z-Index Navbar */}
       <Navbar />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full p-4 md:p-8 flex flex-col justify-center space-y-6">
-        <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800">
+      {/* Main Container with pt-24 Padding to prevent Header Overlap */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-24 pb-8 relative z-10 flex flex-col justify-center space-y-6">
+        
+        {/* Top Bar: Progress & Target Tech Stack */}
+        <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800 shadow-lg">
           <div>
             <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">
               Question {questionCount} of 5
@@ -98,6 +117,10 @@ export default function ActiveInterviewPage() {
           </div>
         </div>
 
+        {/* Live Question Timer Component */}
+        <QuestionTimer timeLeft={timeLeft} onTimeUp={handleAnswerSubmit} />
+
+        {/* AI Question Box */}
         <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-4">
           <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-4 h-4" /> Dynamic AI Interviewer
@@ -107,7 +130,8 @@ export default function ActiveInterviewPage() {
           </p>
         </div>
 
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-4">
+        {/* Candidate Answer Box & Controls */}
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
           <div className="flex justify-between items-center">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Candidate Answer Representation
@@ -131,7 +155,7 @@ export default function ActiveInterviewPage() {
               type="button"
               disabled={submitting || loading || !userAnswer.trim()}
               onClick={handleAnswerSubmit}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 cursor-pointer"
             >
               {submitting ? "Evaluating Response..." : "Submit Answer"} 
               {questionCount >= 5 ? <ArrowRight className="w-4 h-4" /> : <Send className="w-4 h-4" />}
