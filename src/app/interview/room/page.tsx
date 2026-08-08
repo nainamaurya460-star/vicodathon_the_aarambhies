@@ -2,27 +2,32 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+// 1. Import Karein
+import GlowingVoiceOrb from '@/components/ui/GlowingVoiceOrb';
 
 export default function InterviewRoom() {
   const [messages, setMessages] = useState([
     { sender: 'ai', text: 'Hello! Welcome to your technical interview. Let us start with your core tech stack. Can you explain how React handles state updates efficiently?' }
   ]);
-  const [input, setInput] = useState('');
+  
+  // 2. State manage karne ke liye ki abhi mic sun raha hai ya nahi
+  const [isRecording, setIsRecording] = useState(false);
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    const newMessages = [...messages, { sender: 'user', text: input }];
-    setMessages(newMessages);
-    setInput('');
-
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { sender: 'ai', text: 'Thank you for your response. Let us move to the next coding challenge.' }
-      ]);
-    }, 1000);
+  // 3. Function jo recording state ko toggle karega (Click karne par)
+  const handleMicClick = (nowListening: boolean) => {
+    setIsRecording(nowListening);
+    
+    // Agar abhi start hui hai, toh 3 second baad AI ko respond karne ka simulation
+    if (nowListening) {
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          { sender: 'ai', text: 'Thank you for your response on React state. Let us move to the next question: What is the virtual DOM?' }
+        ]);
+        // Wapas idle state pe aa jayein
+        setIsRecording(false);
+      }, 3500);
+    }
   };
 
   return (
@@ -59,21 +64,13 @@ export default function InterviewRoom() {
           ))}
         </div>
 
-        <form onSubmit={handleSend} className="mt-4 flex gap-2">
-          <input
-            type="text"
-            placeholder="Type your answer here..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="flex-1 px-4 py-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-100 focus:outline-none focus:border-indigo-500 transition text-sm"
+        {/* 4. Yahan Call Karein Glowing Orb Component ko */}
+        <div className="mt-6 border-t border-slate-800/80 pt-4 flex flex-col items-center">
+          <GlowingVoiceOrb 
+            isListening={isRecording} 
+            setIsListening={handleMicClick} //Recording state change handle karega
           />
-          <button
-            type="submit"
-            className="px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition"
-          >
-            Send
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );
