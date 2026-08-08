@@ -1,32 +1,49 @@
 import { NextResponse } from "next/server";
-import { getInterviewModel } from "@/lib/ai/client";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
+  let activeTopic = "Software Engineering";
+
   try {
     const body = await req.json();
-    const { role, seniority, topic, questionIndex } = body;
+    const role: string = body?.role || "Software Engineer";
+    const seniority: string = body?.seniority || "Mid-Level";
+    const topic: string = body?.topic || "Software Engineering";
+    const previousAnswer: string = body?.previousAnswer || "";
 
-    const model = getInterviewModel();
+    activeTopic = topic;
 
-    const systemPrompt = `You are a Senior Technical Interviewer conducting a mock interview for a ${seniority || "Intermediate"} ${role || "Software Engineer"} specializing in ${topic || "General"}.
-    
-Generate question #${questionIndex || 1}. Return STRICT JSON format matching this schema:
-{
-  "questionId": "q_${Date.now()}",
-  "questionText": "Clear technical question here",
-  "category": "Architecture | System Design | Theoretical | Problem Solving",
-  "difficulty": "Easy" | "Medium" | "Hard",
-  "expectedKeyPoints": ["Point 1", "Point 2", "Point 3"]
-}`;
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const result = await model.generateContent(systemPrompt);
-    const parsedData = JSON.parse(result.response.text());
+    let prompt = `You are a Senior Technical Interviewer conducting an interview for a ${seniority} ${role}.
+Focus Topic: ${topic}.`;
 
-    return NextResponse.json({ success: true, data: parsedData });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to generate question" },
-      { status: 500 }
-    );
+    if (previousAnswer) {
+      prompt += `\nThe candidate previously answered: "${previousAnswer}".
+Ask a concise follow-up technical question based directly on their answer to evaluate deeper domain expertise. Do not ask generic questions.`;
+    } else {
+      prompt += `\nAsk a sharp, practical opening technical question to start the interview.`;
+    }
+
+    prompt += `\nReturn ONLY the interview question text. Keep it under 25 words. No markdown formatting or extra dialogue.`;
+
+    const result = await model.generateContent(prompt);
+    const generatedQuestion = result.response.text().trim();
+
+    return NextResponse.json({ question: generatedQuestion });
+  } catch (error) {
+    console.error("Gemini Question API Error:", error);
+
+    const fallbackQuestions = [
+      `What are the main performance considerations when scaling ${activeTopic}?`,
+      `How do you handle error boundaries and asynchronous state in production?`,
+      `Describe your approach to API caching and data fetching optimizations.`,
+      `How do you ensure test coverage and maintainability across a large codebase?`
+    ];
+    const randomIndex = Math.floor(Math.random() * fallbackQuestions.length);
+
+    return NextResponse.json({ question: fallbackQuestions[randomIndex] });
   }
 }
