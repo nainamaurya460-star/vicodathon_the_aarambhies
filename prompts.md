@@ -20,4 +20,5 @@
 | **#002** | Interview Setup Screen (`src/app/interview/setup/page.tsx`) | Gemini 1.5 Pro | *"Role: Senior Frontend Engineer & UI/UX Expert. Stack: Next.js 15, React, Tailwind CSS, Lucide React. Task: Build a sleek, modern, Dark-mode Glassmorphic 'Interview Setup & Configuration Screen' for our AI Mock Interview Platform inside app/interview/setup/page.tsx with job role selector, experience level, tech stack input, duration, and stress-free focus mode toggle."* | Built complete dark-mode glassmorphic setup UI with interactive state controls for role, experience, tech stack, and duration. |
 ## Log #003 - Interview Workspace Page Layout
 
-**Prompt:** Built dynamic interview workspace page layout with interactive timer, STAR methodology guidance box, focus mode toggle, and answer submit interface.
+## Log #004 - Scorecard and Report UI
+**Prompt:** Built responsive interview evaluation scorecard layout featuring overall score meter, skill breakdown progress bars, and structured strength/weakness analysis.**Prompt:** Built dynamic interview workspace page layout with interactive timer, STAR methodology guidance box, focus mode toggle, and answer submit interface.
