@@ -49,8 +49,7 @@ export async function POST(req: Request) {
     }
 
     if (previousAnswer) {
-      prompt += `\nThe candidate previously answered: "${previousAnswer}".
-Ask a sharp, concise follow-up question based directly on their response.`;
+      prompt += `\nThe candidate previously answered: "${previousAnswer}". Ask a sharp, concise follow-up question based directly on their response.`;
     } else {
       prompt += `\nAsk an opening question to start the interview session.`;
     }
@@ -64,7 +63,6 @@ Ask a sharp, concise follow-up question based directly on their response.`;
   } catch (error) {
     console.error("Gemini Question API Error:", error);
 
-    // Fallbacks
     const hrFallbacks = [
       "Could you introduce yourself and walk me through your professional background?",
       "Tell me about a time you faced a disagreement within a team and how you resolved it.",
