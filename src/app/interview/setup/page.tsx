@@ -30,10 +30,29 @@ export default function InterviewSetupPage() {
   const [duration, setDuration] = useState("15 mins");
   const [skills, setSkills] = useState("React, Next.js, TypeScript, Tailwind CSS");
   const [focusMode, setFocusMode] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleStartInterview = () => {
-    // Navigating to active interview room
-    router.push("/interview/demo-123");
+  const handleStartInterview = async () => {
+    setIsSubmitting(true);
+    try {
+      const activeRoleObj = roles.find((r) => r.id === selectedRole);
+      
+      const interviewConfig = {
+        role: activeRoleObj ? activeRoleObj.title : "Software Engineer",
+        seniority: experience,
+        duration: duration,
+        topic: skills,
+        focusMode: focusMode,
+        createdAt: new Date().toISOString(),
+      };
+
+      sessionStorage.setItem("active_interview_config", JSON.stringify(interviewConfig));
+      router.push("/interview");
+    } catch (error) {
+      console.error("Failed to initialize session configuration:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -48,9 +67,14 @@ export default function InterviewSetupPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5" /> AI Interview Suite v1.0
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            Configure Your Mock Interview
+          
+          <h1 
+            className="text-3xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent"
+            style={{ backgroundImage: "linear-gradient(to right, #ffffff, #e2e8f0, #94a3b8)" }}
+          >
+            Your Mock Interview
           </h1>
+
           <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto">
             Customize role dynamics, technical topics, and adaptive evaluation modes before entering the room.
           </p>
@@ -183,10 +207,13 @@ export default function InterviewSetupPage() {
           {/* Action Button */}
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={handleStartInterview}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-bold text-base shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 group transition-all duration-200"
+            className="w-full py-4 rounded-xl text-white font-bold text-base shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 group transition-all duration-200 disabled:opacity-50"
+            style={{ backgroundImage: "linear-gradient(to right, #4f46e5, #6366f1, #06b6d4)" }}
           >
-            Start AI Interview <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            {isSubmitting ? "Initializing Session..." : "Start AI Interview"} 
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </main>
