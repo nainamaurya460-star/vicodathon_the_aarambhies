@@ -1,20 +1,18 @@
 # vicodathon-the-aarambhies
 AI-powered mock interview &amp; talent evaluation platform for AB Talks ViCodathon 2026
 ---
+## 🚀 Current Milestone Status (Phase 1 & 2 Complete)
 
-## 🚦 Project Roadmap & Live Progress
+- [x] **Phase 1: Setup & Design System**
+  - Next.js 15 + Tailwind CSS v4 Dark Glassmorphic Design System
+  - Gemini Flash API Integration (`lib/ai/client.ts`)
+  - Route setup for `/interview/setup` and Landing Page
 
-### 🟡 Currently Building (Phase 1 & 2)
-- [x] Public GitHub Repository Setup & `prompts.md` initialization
-- [x] Next.js 15 App Router + Tailwind CSS + Glassmorphism UI setup
-- [/] **Interactive Landing Page** with 3D hover effects & Role Selection Modal
-- [ ] **Adaptive AI Interview Engine** (Integrating Gemini/Claude API for dynamic questions)
-- [ ] **Voice-to-Text Input** via Web Speech API
+- [x] **Phase 2: Core AI & Voice Engine**
+  - Web Speech API Engine (`VoiceRecorder.tsx`) with real-time transcription
+  - Dynamic AI Adaptive Follow-up Loop (`Candidate Answer -> AI Evaluation -> Next Question`)
+  - Session configuration state persistence across routes
 
-### 🔵 Upcoming Phases (Phase 3 & 4)
-- [ ] **Instant AI Evaluation Engine:** Multi-metric scoring (Technical, Communication, Confidence)
-- [ ] **Gap Analysis & Feedback Dashboard:** Highlighting missing keywords & ideal answers
-- [ ] **AB Talks Ecosystem Feature:** Synergy Points Reward Badge (+50 Points) & Downloadable Readiness Report
-- [ ] **Final Polish & Demo Video:** Micro-animations, Vercel production build, and 2-min Loom demo
-
----
+- [ ] **Phase 3: Analytics & Scorecards (In Progress)**
+  - Performance diagnostics and dynamic report generation (`/interview/report`)
+  - Recharts metric radar charts & Skill Gap Roadmaps

@@ -9,10 +9,26 @@ import { UserCheck, Code2, Cpu, Users, Sparkles, ArrowRight } from "lucide-react
 export default function SetupPage() {
   const router = useRouter();
 
+<<<<<<< HEAD
   // Form State
   const [role, setRole] = useState("Software Engineer");
   const [seniority, setSeniority] = useState("Mid-Level");
   const [selectedRound, setSelectedRound] = useState("Technical Core");
+=======
+  const handleStartInterview = async () => {
+    setIsSubmitting(true);
+    try {
+      const activeRoleObj = roles.find((r) => r.id === selectedRole);
+
+      const interviewConfig = {
+        role: activeRoleObj ? activeRoleObj.title : "Software Engineer",
+        seniority: experience,
+        duration: duration,
+        topic: skills,
+        focusMode: focusMode,
+        createdAt: new Date().toISOString(),
+      };
+>>>>>>> 522210edfb9d29ea82017ae3ccc858d54b4aaf63
 
   // Round Selection Options
   const rounds = [
@@ -63,6 +79,7 @@ export default function SetupPage() {
   };
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between">
       <Navbar />
 
@@ -74,18 +91,42 @@ export default function SetupPage() {
           </div>
           <h1 className="text-3xl md:text-5xl font-bold text-white">
             Configure Your Mock Session
+=======
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-center items-center p-4 md:p-8 relative overflow-hidden">
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+
+      <main className="w-full max-w-4xl z-10 space-y-8">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5" /> AI Interview Suite v1.0
+          </div>
+
+          <h1 
+            className="text-3xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent"
+            style={{ backgroundImage: "linear-gradient(to right, #ffffff, #e2e8f0, #94a3b8)" }}
+          >
+            Your Mock Interview
+>>>>>>> 522210edfb9d29ea82017ae3ccc858d54b4aaf63
           </h1>
           <p className="text-sm text-slate-400">
             Select your targeted interview round and parameters for realistic evaluation.
           </p>
         </div>
 
+<<<<<<< HEAD
         <form onSubmit={handleStart} className="space-y-6 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl">
           
           {/* Round Selection Panel */}
           <div className="space-y-3">
             <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               Select Interview Round
+=======
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-2xl p-6 md:p-8 space-y-8 shadow-2xl shadow-black/50">
+          <div className="space-y-4">
+            <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Briefcase className="w-4 h-4 text-indigo-400" /> Select Target Job Role
+>>>>>>> 522210edfb9d29ea82017ae3ccc858d54b4aaf63
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {rounds.map((r) => {
@@ -125,11 +166,18 @@ export default function SetupPage() {
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* Role & Seniority Inputs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Target Job Role
+=======
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <Zap className="w-4 h-4 text-cyan-400" /> Experience Level
+>>>>>>> 522210edfb9d29ea82017ae3ccc858d54b4aaf63
               </label>
               <input
                 type="text"
@@ -141,9 +189,15 @@ export default function SetupPage() {
               />
             </div>
 
+<<<<<<< HEAD
             <div className="space-y-2">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Seniority Level
+=======
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <Clock className="w-4 h-4 text-emerald-400" /> Estimated Duration
+>>>>>>> 522210edfb9d29ea82017ae3ccc858d54b4aaf63
               </label>
               <select
                 value={seniority}
@@ -157,7 +211,44 @@ export default function SetupPage() {
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* Submit Action */}
+=======
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-violet-400" /> Core Topics / Technical Stack
+            </label>
+            <input
+              type="text"
+              value={skills}
+              onChange={(e) => setSkills(e.target.value)}
+              placeholder="e.g. React, Next.js, PostgreSQL, System Design"
+              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-950/40 border border-slate-800/80">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-200">Stress-Free Focus Mode</h4>
+                <p className="text-xs text-slate-400">Hide live scorebars during interview to maintain calm and focus.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFocusMode(!focusMode)}
+              className={`w-12 h-6 flex items-center rounded-full p-1 transition-all duration-300 ${
+                focusMode ? "bg-indigo-600 justify-end" : "bg-slate-800 justify-start"
+              }`}
+            >
+              <div className="w-4 h-4 rounded-full bg-white shadow-md" />
+            </button>
+          </div>
+
+>>>>>>> 522210edfb9d29ea82017ae3ccc858d54b4aaf63
           <button
             type="submit"
             className="w-full py-3.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25"
