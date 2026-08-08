@@ -22,3 +22,15 @@
 
 ## Log #004 - Scorecard and Report UI
 **Prompt:** Built responsive interview evaluation scorecard layout featuring overall score meter, skill breakdown progress bars, and structured strength/weakness analysis.**Prompt:** Built dynamic interview workspace page layout with interactive timer, STAR methodology guidance box, focus mode toggle, and answer submit interface.
+# AI Prompt System Architecture — The Aarambhies
+
+## 1. Dynamic Question Generation Prompt
+**Role:** Technical Interviewer  
+**Input:** Role, Seniority, Optional JD, Optional Resume Text  
+**Prompt:**
+> "You are an expert interviewer for the role of {Role} ({Seniority} level). Based on the provided Job Description: [{JD}] and Resume Context: [{Resume}], generate 3 highly targeted technical and behavioral interview questions. Output only a JSON array of strings."
+
+## 2. Multi-Metric Answer Evaluation Prompt
+**Input:** Question, Candidate Response  
+**Prompt:**
+> "Analyze the candidate's answer for the question: '{Question}'. Candidate Answer: '{Answer}'. Evaluate based on: 1. Technical Accuracy (out of 100), 2. Communication Clarity (out of 100), 3. Overall Readiness Score (out of 100). Provide constructive feedback and an ideal answer snippet. Output strictly in JSON format."

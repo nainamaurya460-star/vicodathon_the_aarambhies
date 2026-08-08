@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
-import { UserCheck, Code2, Cpu, Users, Sparkles, ArrowRight } from "lucide-react";
+import { UserCheck, Code2, Cpu, Users, Sparkles, ArrowRight, FileText, Briefcase } from "lucide-react";
 
 export default function SetupPage() {
   const router = useRouter();
@@ -13,6 +13,8 @@ export default function SetupPage() {
   const [role, setRole] = useState("Software Engineer");
   const [seniority, setSeniority] = useState("Mid-Level");
   const [selectedRound, setSelectedRound] = useState("Technical Core");
+  const [jdText, setJdText] = useState("");
+  const [resumeText, setResumeText] = useState("");
 
   // Round Selection Options
   const rounds = [
@@ -49,11 +51,13 @@ export default function SetupPage() {
   const handleStart = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Store interview parameters in sessionStorage for active session
+    // Store interview parameters and optional context in sessionStorage
     const config = {
       role,
       seniority,
       topic: selectedRound,
+      jdText,
+      resumeText,
     };
 
     sessionStorage.setItem("active_interview_config", JSON.stringify(config));
@@ -154,6 +158,35 @@ export default function SetupPage() {
                 <option value="Mid-Level">Mid-Level</option>
                 <option value="Senior">Senior / Lead Level</option>
               </select>
+            </div>
+          </div>
+
+          {/* Context Customization (Optional JD & Resume) */}
+          <div className="space-y-4 pt-2 border-t border-slate-800/80">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Briefcase className="w-3.5 h-3.5 text-indigo-400" /> Job Description Context (Optional)
+              </label>
+              <textarea
+                value={jdText}
+                onChange={(e) => setJdText(e.target.value)}
+                placeholder="Paste targeted job description to tailor interview questions..."
+                rows={2}
+                className="w-full px-4 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-indigo-400" /> Resume / Projects Summary (Optional)
+              </label>
+              <textarea
+                value={resumeText}
+                onChange={(e) => setResumeText(e.target.value)}
+                placeholder="Paste key resume highlights or tech stack details..."
+                rows={2}
+                className="w-full px-4 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+              />
             </div>
           </div>
 
