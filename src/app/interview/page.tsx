@@ -35,7 +35,6 @@ export default function InterviewPage() {
       setSessionConfig(parsed);
       fetchNextQuestion(parsed, "");
     } else {
-      // Fallback if accessed directly without setup
       fetchNextQuestion({ role: "Software Engineer", seniority: "Mid-Level", topic: "Technical Core" }, "");
     }
   }, []);
@@ -60,29 +59,26 @@ export default function InterviewPage() {
       if (data?.question) {
         setQuestion(data.question);
       } else {
-        setQuestion("Explain your experience with core system architecture and asynchronous processing.");
+        setQuestion("How do you handle error boundaries and asynchronous state management in production?");
       }
     } catch (err) {
       console.error("Failed to fetch question:", err);
-      setQuestion("How do you ensure code reliability and performance in high-load production environments?");
+      setQuestion("How do you handle error boundaries and asynchronous state management in production?");
     }
   };
 
-  // Submit Answer & Auto-Submit Callback for QuestionTimer
+  // Submit Answer
   const handleAnswerSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    // Save Q&A pair in SessionStorage history
     const existingHistory = JSON.parse(sessionStorage.getItem("qa_history") || "[]");
     const updatedHistory = [...existingHistory, { question, answer: currentAnswer }];
     sessionStorage.setItem("qa_history", JSON.stringify(updatedHistory));
 
     if (questionCount >= totalQuestions) {
-      // Completed all questions -> Redirect to Report Scorecard
       router.push("/interview/report");
     } else {
-      // Advance to next question
       setQuestionCount((prev) => prev + 1);
       setCurrentAnswer("");
       await fetchNextQuestion(sessionConfig, currentAnswer);
@@ -94,19 +90,21 @@ export default function InterviewPage() {
     <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between">
       <Navbar />
 
-      <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 space-y-6 my-auto">
+      {/* FIXED TOP PADDING: pt-32 ensures full clearance from fixed navbar */}
+      <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-32 pb-12 space-y-6">
+        
         {/* Workspace Header Bar */}
-        <div className="flex items-center justify-between bg-slate-900/80 border border-slate-800 p-4 rounded-2xl shadow-lg">
+        <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-lg">
           <div className="space-y-1">
             <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
-              {sessionConfig?.topic || "Technical Round"} • Question {questionCount} of {totalQuestions}
+              {sessionConfig?.topic || "Technical Core"} • Question {questionCount} of {totalQuestions}
             </span>
-            <p className="text-xs text-slate-400">
-              Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Developer"}</span> ({sessionConfig?.seniority || "Mid-Level"})
+            <p className="text-xs text-slate-400 mt-1">
+              Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Software Engineer"}</span> ({sessionConfig?.seniority || "Mid-Level"})
             </p>
           </div>
 
-          {/* 2-Minute Live Per-Question Countdown Timer */}
+          {/* 2-Minute Live Per-Question Timer */}
           <QuestionTimer durationInSeconds={120} onTimeUp={handleAnswerSubmit} />
         </div>
 
@@ -120,14 +118,27 @@ export default function InterviewPage() {
           </h2>
         </div>
 
-        {/* Dual Voice & Text Input Section */}
-        <div className="space-y-4">
-          <VoiceRecorder onTranscriptChange={(text) => setCurrentAnswer(text)} />
+        {/* Dual Voice & Manual Text Input Area */}
+        <div className="space-y-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              Candidate Answer
+            </label>
+            <VoiceRecorder onTranscriptChange={(text) => setCurrentAnswer(text)} />
+          </div>
+
+          {/* Fallback & Primary Textarea for manual editing */}
+          <textarea
+            value={currentAnswer}
+            onChange={(e) => setCurrentAnswer(e.target.value)}
+            placeholder="Your voice transcription will stream here automatically. You can also edit or type manually..."
+            className="w-full h-36 bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder:text-slate-600"
+          />
 
           <button
             onClick={handleAnswerSubmit}
             disabled={isSubmitting}
-            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25"
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25"
           >
             {isSubmitting ? (
               <>Evaluating & Loading Next Question...</>
