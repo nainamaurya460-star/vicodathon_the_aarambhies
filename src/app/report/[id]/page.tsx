@@ -1,101 +1,135 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Award, ArrowLeft, CheckCircle2, AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/ui/Footer";
+import { Trophy, Target, AlertTriangle, ArrowLeft, RefreshCw, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 
-export default function InterviewReportPage() {
-  const params = useParams();
-  const router = useRouter();
+export default function CandidateReportPage() {
+  const [report, setReport] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const score = 82;
+  useEffect(() => {
+    async function evaluateSession() {
+      const savedConfig = sessionStorage.getItem("active_interview_config");
+      const parsedConfig = savedConfig ? JSON.parse(savedConfig) : {};
 
-  const skillBreakdown = [
-    { skill: "Technical Accuracy", score: 85, color: "bg-cyan-500" },
-    { skill: "Communication Clarity", score: 80, color: "bg-indigo-500" },
-    { skill: "Problem Solving (STAR)", score: 78, color: "bg-emerald-500" },
-  ];
+      try {
+        const res = await fetch("/api/interview/evaluate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            role: parsedConfig.role || "Software Engineer",
+            seniority: parsedConfig.seniority || "Mid-Level",
+            topic: parsedConfig.topic || "Technical Core",
+            qaHistory: [
+              { question: "Explain state management and optimization in frontend applications.", answer: "Used React hooks and Memoization." }
+            ],
+          }),
+        });
+
+        const data = await res.json();
+        setReport(data);
+      } catch (err) {
+        console.error("Failed to load evaluation scorecard:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    evaluateSession();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12 flex flex-col items-center">
-      <main className="w-full max-w-4xl space-y-8">
-        {/* Top Navigation */}
-        <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/interview/setup")}
-            className="border-slate-800 text-slate-300 hover:bg-slate-900 flex items-center gap-2"
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between">
+      <Navbar />
+
+      <main className="flex-1 max-w-4xl mx-auto w-full p-4 md:p-8 space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+            <Trophy className="w-3.5 h-3.5" /> Session Evaluation Complete
+          </div>
+          <h1 
+            className="text-3xl md:text-5xl font-bold bg-clip-text text-transparent"
+            style={{ backgroundImage: "linear-gradient(to right, #ffffff, #e2e8f0, #94a3b8)" }}
           >
-            <ArrowLeft className="w-4 h-4" /> Start New Interview
-          </Button>
-          <span className="text-xs font-mono text-slate-500">Report ID: {params.id}</span>
+            Candidate Growth Scorecard
+          </h1>
+          <p className="text-sm text-slate-400">
+            AI-generated performance diagnostics and actionable improvement areas.
+          </p>
         </div>
 
-        {/* Hero Score Card */}
-        <Card className="bg-slate-900/90 border-slate-800 text-white p-8 backdrop-blur-xl flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="space-y-2 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium">
-              <Award className="w-4 h-4" /> Performance Summary
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 space-y-4">
+            <RefreshCw className="w-8 h-8 text-indigo-400 animate-spin" />
+            <p className="text-sm text-slate-400">Synthesizing interview transcripts and calculating metrics...</p>
+          </div>
+        ) : (
+          <>
+            {/* Score Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2 shadow-xl">
+                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Overall Score</span>
+                <div className="text-4xl font-extrabold text-indigo-400">{report?.overallScore || 78}%</div>
+              </div>
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2 shadow-xl">
+                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Technical Accuracy</span>
+                <div className="text-4xl font-extrabold text-cyan-400">{report?.technicalAccuracy || 75}%</div>
+              </div>
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2 shadow-xl">
+                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Communication</span>
+                <div className="text-4xl font-extrabold text-emerald-400">{report?.communicationScore || 82}%</div>
+              </div>
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Interview Evaluation</h1>
-            <p className="text-slate-400 text-sm">Target Role: Frontend Engineer (Mid-Level)</p>
-          </div>
 
-          <div className="flex flex-col items-center justify-center p-6 bg-slate-950/80 rounded-2xl border border-slate-800 w-36 h-36">
-            <span className="text-4xl font-extrabold bg-gradient-to-r from-cyan-400 to-indigo-500 bg-clip-text text-transparent">
-              {score}%
-            </span>
-            <span className="text-xs text-slate-400 font-medium mt-1">Overall Score</span>
-          </div>
-        </Card>
-
-        {/* Skill Gap Breakdown */}
-        <Card className="bg-slate-900/90 border-slate-800 p-6 space-y-4">
-          <CardHeader className="p-0 mb-2">
-            <CardTitle className="text-lg text-slate-200">Skill Gap Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 space-y-4">
-            {skillBreakdown.map((item) => (
-              <div key={item.skill} className="space-y-1.5">
-                <div className="flex justify-between text-xs font-medium text-slate-300">
-                  <span>{item.skill}</span>
-                  <span>{item.score}%</span>
-                </div>
-                <div className="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
-                  <div
-                    className={`h-2.5 rounded-full ${item.color} transition-all duration-500`}
-                    style={{ width: `${item.score}%` }}
-                  />
+            {/* Diagnostic Breakdown */}
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 shadow-2xl">
+              <div>
+                <h3 className="text-sm font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <Target className="w-4 h-4" /> Demonstrated Strengths
+                </h3>
+                <div className="space-y-2">
+                  {report?.strengths?.map((str: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2.5 text-sm text-slate-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <span>{str}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
 
-        {/* Strengths & Action Plan */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="bg-slate-900/90 border-slate-800 p-6 space-y-3">
-            <h3 className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" /> Strengths
-            </h3>
-            <ul className="text-xs text-slate-300 space-y-2 list-disc pl-4">
-              <li>Strong understanding of React State Management and Context API.</li>
-              <li>Clear articulation during technical explanations.</li>
-            </ul>
-          </Card>
+              <div className="border-t border-slate-800/80 pt-6">
+                <h3 className="text-sm font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-4 h-4" /> Targeted Growth Areas
+                </h3>
+                <div className="space-y-2">
+                  {report?.improvements?.map((imp: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2.5 text-sm text-slate-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-2" />
+                      <span>{imp}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-          <Card className="bg-slate-900/90 border-slate-800 p-6 space-y-3">
-            <h3 className="text-sm font-semibold text-amber-400 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" /> Improvement Areas
-            </h3>
-            <ul className="text-xs text-slate-300 space-y-2 list-disc pl-4">
-              <li>Elaborate more on Redux Middleware (Thunk/Saga) comparison.</li>
-              <li>Structure answers strictly using the STAR method for scenario questions.</li>
-            </ul>
-          </Card>
-        </div>
+            {/* Action CTAs */}
+            <div className="flex justify-center">
+              <Link
+                href="/interview/setup"
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all shadow-lg shadow-indigo-500/20"
+              >
+                <ArrowLeft className="w-4 h-4" /> Start Another Session
+              </Link>
+            </div>
+          </>
+        )}
       </main>
+
+      <Footer />
     </div>
   );
 }
