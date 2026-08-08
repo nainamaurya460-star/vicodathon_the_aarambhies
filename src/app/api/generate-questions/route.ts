@@ -1,44 +1,78 @@
 import { NextResponse } from "next/server";
 
+// Prevent Vercel/Next.js from caching dynamic interview questions
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function POST(req: Request) {
   try {
-    const { question, userAnswer, role } = await req.json();
+    const body = await req.json();
+    const { role, seniority, topic, previousAnswer } = body;
 
-    // Evaluation logic analyzing response quality & STAR structure
-    const wordCount = userAnswer ? userAnswer.trim().split(/\s+/).length : 0;
-    
-    // Dynamic score calculation based on response depth
-    const technicalScore = Math.min(95, Math.max(65, wordCount * 2 + 50));
-    const communicationScore = Math.min(90, Math.max(70, wordCount * 1.5 + 55));
-    const problemSolvingScore = Math.min(92, Math.max(60, wordCount * 1.8 + 52));
-    
-    const overallScore = Math.round((technicalScore + communicationScore + problemSolvingScore) / 3);
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY is not configured" },
+        { status: 500 }
+      );
+    }
 
-    const evaluationResult = {
-      overallScore,
-      metrics: {
-        technicalAccuracy: technicalScore,
-        communicationClarity: communicationScore,
-        starMethodology: problemSolvingScore,
-      },
-      strengths: [
-        "Structured explanation with practical technical examples.",
-        "Clear communication and effective use of core concepts.",
-      ],
-      improvements: [
-        "Include more concrete metric-driven outcomes (e.g., efficiency gains in %).",
-        "Elaborate slightly deeper on edge-case handling scenarios.",
-      ],
-      feedbackSummary: `Solid response for a ${role || "Engineer"} role. High alignment with required technical competency.`,
-    };
+    // Dynamic timestamp seed to break deterministic AI response caching
+    const timestampSeed = Date.now();
 
+    const prompt = `
+You are an expert technical interviewer conducting a live interactive session.
+
+Candidate Details:
+- Role: ${role || "Software Engineer"}
+- Seniority Level: ${seniority || "Mid-Level"}
+- Round / Topic: ${topic || "Technical Core"}
+- Previous Response: "${previousAnswer || "None (First Question of the Session)"}"
+- Session Seed: ${timestampSeed}
+
+INSTRUCTION:
+1. Generate ONE concise, clear, and challenging technical interview question tailored to this role and topic.
+2. If a previous answer is provided, probe deeper into their explanation or pivot logically to a relevant follow-up topic.
+3. NEVER repeat generic questions.
+4. Return ONLY valid JSON with no markdown formatting around it:
+
+{
+  "question": "<Your dynamic question text here?>"
+}
+    `;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { 
+            responseMimeType: "application/json",
+            temperature: 0.8 // High randomness to ensure distinct questions
+          },
+        }),
+      }
+    );
+
+    const data = await response.json();
+    const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (textResponse) {
+      const parsedData = JSON.parse(textResponse);
+      return NextResponse.json(parsedData);
+    }
+
+    // Dynamic Fallback in case API parsing encounters an issue
     return NextResponse.json({
-      success: true,
-      evaluation: evaluationResult,
+      question: `Could you explain the key performance trade-offs you consider when architecting solutions for ${topic || "Technical Core"}?`
     });
+
   } catch (error) {
+    console.error("Question Generation Error:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to evaluate response" },
+      { error: "Failed to generate dynamic question" },
       { status: 500 }
     );
   }
