@@ -14,12 +14,13 @@ export default function VoiceRecorder({ onTranscriptChange, disabled }: VoiceRec
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    // Check Web Speech API browser support
+    if (typeof window === "undefined") return;
+
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setError("Speech recognition is not supported in this browser. Please type your answer.");
+      setError("Speech recognition is not supported in this browser. Please type your response.");
       return;
     }
 
@@ -37,13 +38,16 @@ export default function VoiceRecorder({ onTranscriptChange, disabled }: VoiceRec
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Speech recognition error:", event.error);
       if (event.error === "not-allowed") {
-        setError("Microphone permission denied. Please allow mic access or use text input.");
-      } else {
-        setError("Voice input error. You can continue typing manually.");
+        setError("Microphone permission denied. Please allow mic access or type manually.");
+        setIsListening(false);
+      } else if (event.error === "network") {
+        // Silently capture network drops without blocking speech input state
+        setError("Voice network drop detected. Type your answer below or click button to retry mic.");
+        setIsListening(false);
+      } else if (event.error !== "no-speech") {
+        setIsListening(false);
       }
-      setIsListening(false);
     };
 
     recognition.onend = () => {
@@ -57,7 +61,9 @@ export default function VoiceRecorder({ onTranscriptChange, disabled }: VoiceRec
     if (!recognitionRef.current) return;
 
     if (isListening) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
       setIsListening(false);
     } else {
       setError(null);
@@ -65,7 +71,7 @@ export default function VoiceRecorder({ onTranscriptChange, disabled }: VoiceRec
         recognitionRef.current.start();
         setIsListening(true);
       } catch (err) {
-        console.error("Failed to start speech recognition:", err);
+        setIsListening(false);
       }
     }
   };
@@ -75,7 +81,7 @@ export default function VoiceRecorder({ onTranscriptChange, disabled }: VoiceRec
       <div className="flex items-center gap-3">
         <button
           type="button"
-          disabled={disabled || !!error}
+          disabled={disabled}
           onClick={toggleListening}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
             isListening
