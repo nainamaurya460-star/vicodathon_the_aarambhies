@@ -91,15 +91,21 @@ export default function InterviewPage() {
 
   return (
     <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between relative overflow-hidden">
-      {/* High-Tech Background Glow Effects */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
+      {/* High-Tech Background Glow Effects (Error-Free Inline Styles) */}
+      <div 
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-indigo-500/10 rounded-full pointer-events-none" 
+        style={{ width: '500px', height: '500px', filter: 'blur(120px)' }} 
+      />
+      <div 
+        className="absolute bottom-10 right-10 bg-cyan-500/10 rounded-full pointer-events-none" 
+        style={{ width: '350px', height: '350px', filter: 'blur(100px)' }} 
+      />
 
       {/* Sticky High Z-Index Navbar */}
       <Navbar />
 
-      {/* Main Workspace with top padding to prevent header overlap */}
-      <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-32 pb-12 space-y-6">
+      {/* Main Workspace */}
+      <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-32 pb-12 space-y-6 relative z-10">
         
         {/* Workspace Header Bar */}
         <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-lg">
@@ -112,7 +118,7 @@ export default function InterviewPage() {
             </p>
           </div>
 
-          {/* 2-Minute Live Timer with key prop for clean reset per question */}
+          {/* 2-Minute Live Timer with key prop for auto-reset */}
           <QuestionTimer key={questionCount} durationInSeconds={120} onTimeUp={handleAnswerSubmit} />
         </div>
 
