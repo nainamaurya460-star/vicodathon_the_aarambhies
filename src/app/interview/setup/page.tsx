@@ -5,21 +5,23 @@ import { useRouter } from "next/navigation";
 import StarBackground from "@/components/ui/StarBackground";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
-import { Sparkles, Rocket, Briefcase, GraduationCap, FileText } from "lucide-react";
+import { Sparkles, Rocket, Briefcase, GraduationCap, FileText, Layers, Upload } from "lucide-react";
 
 export default function SetupPage() {
   const router = useRouter();
   const [role, setRole] = useState("Software Engineer");
   const [level, setLevel] = useState("Entry Level / Student");
+  const [round, setRound] = useState("Technical Assessment");
   const [jd, setJd] = useState("");
+  const [resumeText, setResumeText] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Save setup config in sessionStorage
-    const setupData = { role, level, jd };
+    // Save full setup config in sessionStorage
+    const setupData = { role, level, round, jd, resumeText };
     sessionStorage.setItem("interview_setup", JSON.stringify(setupData));
 
     setTimeout(() => {
@@ -42,14 +44,14 @@ export default function SetupPage() {
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-white">Initialize Your Session</h1>
             <p className="text-xs md:text-sm text-slate-400">
-              Configure your role and domain context to start your AI-powered mock interview.
+              Configure your target role, round type, and context for an AI-customized interview.
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Target Role */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-indigo-400" /> Target Role
               </label>
@@ -58,38 +60,70 @@ export default function SetupPage() {
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 required
-                className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-500"
+                className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-500"
                 placeholder="e.g. Full Stack Developer, UI/UX Designer"
               />
             </div>
 
-            {/* Experience Level */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 text-cyan-400" /> Experience Level
-              </label>
-              <select
-                value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all cursor-pointer"
-              >
-                <option value="Entry Level / Student">Entry Level / Student (0-1 yrs)</option>
-                <option value="Mid Level">Mid Level (1-3 yrs)</option>
-                <option value="Senior Level">Senior Level (3+ yrs)</option>
-              </select>
+            {/* Experience Level & Interview Round Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-cyan-400" /> Experience Level
+                </label>
+                <select
+                  value={level}
+                  onChange={(e) => setLevel(e.target.value)}
+                  className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all cursor-pointer"
+                >
+                  <option value="Entry Level / Student">Entry Level / Student (0-1 yrs)</option>
+                  <option value="Mid Level">Mid Level (1-3 yrs)</option>
+                  <option value="Senior Level">Senior Level (3+ yrs)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-purple-400" /> Interview Round
+                </label>
+                <select
+                  value={round}
+                  onChange={(e) => setRound(e.target.value)}
+                  className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all cursor-pointer"
+                >
+                  <option value="Technical Assessment">Technical Assessment</option>
+                  <option value="System Design & Architecture">System Design & Architecture</option>
+                  <option value="Behavioral & HR Round">Behavioral & HR Round</option>
+                  <option value="General Screening">General Screening</option>
+                </select>
+              </div>
             </div>
 
-            {/* Job Description / Focus Areas */}
-            <div className="space-y-2">
+            {/* Job Description */}
+            <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-emerald-400" /> Job Description / Focus Topics
               </label>
               <textarea
                 value={jd}
                 onChange={(e) => setJd(e.target.value)}
-                rows={4}
-                className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-500 resize-none"
-                placeholder="Paste job description or main focus areas (e.g., React, Next.js, Node.js, System Design)..."
+                rows={3}
+                className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-500 resize-none"
+                placeholder="Paste job description or main topics (React, Next.js, APIs)..."
+              />
+            </div>
+
+            {/* Resume / Background Context */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <Upload className="w-4 h-4 text-amber-400" /> Resume / Candidate Context (Optional)
+              </label>
+              <textarea
+                value={resumeText}
+                onChange={(e) => setResumeText(e.target.value)}
+                rows={3}
+                className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-slate-500 resize-none"
+                placeholder="Paste key resume highlights, projects, or work history..."
               />
             </div>
 
@@ -97,7 +131,7 @@ export default function SetupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50 mt-2"
             >
               {loading ? (
                 <>
