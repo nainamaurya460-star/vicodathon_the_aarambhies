@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import StarBackground from "@/components/ui/StarBackground";
 import Navbar from "@/components/ui/Navbar";
@@ -12,6 +12,7 @@ export default function InterviewRoomPage() {
   const [messages, setMessages] = useState<Array<{ sender: "ai" | "user"; text: string }>>([]);
   const [isListening, setIsListening] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [transcript, setTranscript] = useState("");
   const [qaHistory, setQaHistory] = useState<Array<{ question: string; answer: string; score: number }>>([]);
   const [setupConfig, setSetupConfig] = useState<any>(null);
 
@@ -19,6 +20,8 @@ export default function InterviewRoomPage() {
   const [showNextModal, setShowNextModal] = useState(false);
   const [nextQuestion, setNextQuestion] = useState("");
   const [lastFeedback, setLastFeedback] = useState("");
+
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     const storedSetup = sessionStorage.getItem("interview_setup");
@@ -42,42 +45,43 @@ export default function InterviewRoomPage() {
   const handleSpeechAnswer = (spokenText: string) => {
     if (!spokenText.trim()) return;
 
-    // 1. Validation for extremely short / invalid answers
+    // Validation for extremely short answers
     if (spokenText.trim().split(" ").length < 3) {
       setMessages((prev) => [
         ...prev,
         { sender: "user", text: spokenText },
         {
           sender: "ai",
-          text: "Could you please elaborate a bit more on your answer? That response was too short to evaluate your technical knowledge properly.",
+          text: "Could you please elaborate a bit more on your answer? That response was too short to evaluate properly.",
         },
       ]);
       return;
     }
 
-    // Show user answer in chat
     setMessages((prev) => [...prev, { sender: "user", text: spokenText }]);
     setIsEvaluating(true);
 
     const currentQuestion = messages[messages.length - 1]?.text || "Interview Question";
     const roundType = setupConfig?.round || "Technical Assessment";
 
-    // 2. Simple Answer Evaluation & Dynamic Compliment Logic
     let score = Math.min(95, Math.max(65, spokenText.length * 2 + 50));
     let compliment = "Good response!";
-    if (spokenText.toLowerCase().includes("react") || spokenText.toLowerCase().includes("state") || spokenText.toLowerCase().includes("api")) {
-      compliment = "Excellent points highlighted regarding your core stack!";
+    if (
+      spokenText.toLowerCase().includes("react") ||
+      spokenText.toLowerCase().includes("state") ||
+      spokenText.toLowerCase().includes("component") ||
+      spokenText.toLowerCase().includes("error")
+    ) {
+      compliment = "Excellent points highlighted regarding your technical approach!";
       score += 5;
     } else {
       compliment = "Thank you for sharing your experience.";
     }
 
-    // Save to history for Scorecard Report
     const updatedHistory = [...qaHistory, { question: currentQuestion, answer: spokenText, score }];
     setQaHistory(updatedHistory);
     sessionStorage.setItem("qa_history", JSON.stringify(updatedHistory));
 
-    // Determine Next Question based on count
     let upcomingQ = "";
     if (updatedHistory.length === 1) {
       upcomingQ = `How do you handle error handling, performance optimization, and async state updates in your projects?`;
@@ -92,35 +96,55 @@ export default function InterviewRoomPage() {
       setLastFeedback(compliment);
       setNextQuestion(upcomingQ);
 
-      // Append AI feedback in chat
       setMessages((prev) => [...prev, { sender: "ai", text: `${compliment} Let's proceed.` }]);
-
-      // Trigger Pop-up Modal for Next Question
       setShowNextModal(true);
+      setTranscript("");
     }, 1200);
   };
 
   const toggleMic = () => {
     if (!isListening) {
-      setIsListening(true);
       if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
-        recognition.continuous = false;
+        
+        recognition.continuous = true;
+        recognition.interimResults = true;
         recognition.lang = "en-US";
 
+        let finalTranscript = "";
+
         recognition.onresult = (event: any) => {
-          const transcriptResult = event.results[0][0].transcript;
-          setIsListening(false);
-          handleSpeechAnswer(transcriptResult);
+          let currentInterim = "";
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript + " ";
+            } else {
+              currentInterim += event.results[i][0].transcript;
+            }
+          }
+          setTranscript(finalTranscript + currentInterim);
         };
 
         recognition.onerror = () => setIsListening(false);
-        recognition.onend = () => setIsListening(false);
+        recognition.onend = () => {
+          // Do not auto-submit on pause unless user manually stopped mic
+        };
+
+        recognitionRef.current = recognition;
         recognition.start();
+        setIsListening(true);
       }
     } else {
+      // Manual Stop by user tap
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
       setIsListening(false);
+
+      if (transcript.trim()) {
+        handleSpeechAnswer(transcript);
+      }
     }
   };
 
@@ -175,6 +199,14 @@ export default function InterviewRoomPage() {
             </div>
           ))}
 
+          {isListening && transcript && (
+            <div className="flex justify-end">
+              <div className="max-w-[80%] rounded-2xl p-4 text-sm bg-indigo-600/40 border border-indigo-500/30 text-indigo-200 italic">
+                {transcript}...
+              </div>
+            </div>
+          )}
+
           {isEvaluating && (
             <div className="flex justify-start">
               <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-xs text-indigo-400 flex items-center gap-2">
@@ -202,13 +234,13 @@ export default function InterviewRoomPage() {
             )}
           </button>
           <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-            {isListening ? "Listening to your response..." : "Tap mic to start answering"}
+            {isListening ? "Listening... Tap mic again when finished speaking" : "Tap mic to start answering"}
           </span>
         </div>
 
       </main>
 
-      {/* 🚀 Next Question Modal Pop-up */}
+      {/* Next Question Pop-up Modal */}
       {showNextModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-indigo-500/40 rounded-2xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6 text-center relative overflow-hidden">
