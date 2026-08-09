@@ -64,10 +64,8 @@ export default function InterviewReportPage() {
           </div>
         </div>
 
-        {/* Metrics & Progress Bars */}
+        {/* Top Progress Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          {/* Technical Accuracy Bar */}
           <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-5 rounded-2xl shadow-xl space-y-3">
             <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase">
               <span>Technical Accuracy</span>
@@ -82,7 +80,6 @@ export default function InterviewReportPage() {
             </div>
           </div>
 
-          {/* Communication Clarity Bar */}
           <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-5 rounded-2xl shadow-xl space-y-3">
             <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase">
               <span>Communication Clarity</span>
@@ -97,7 +94,6 @@ export default function InterviewReportPage() {
             </div>
           </div>
 
-          {/* Domain Knowledge Bar */}
           <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-5 rounded-2xl shadow-xl space-y-3">
             <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase">
               <span>Domain Knowledge</span>
@@ -111,46 +107,64 @@ export default function InterviewReportPage() {
               />
             </div>
           </div>
-
         </div>
 
-        {/* Visual Bar Graph Visualization */}
+        {/* Integrated Side-by-Side Comparison Chart */}
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl space-y-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Activity className="w-5 h-5 text-cyan-400" /> Skill Competency Breakdown
-          </h2>
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Activity className="w-5 h-5 text-cyan-400" /> Skills Side-By-Side Comparison
+            </h2>
+            <div className="flex gap-4 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 text-cyan-400"><div className="w-2.5 h-2.5 rounded-full bg-cyan-400" /> Technical</span>
+              <span className="flex items-center gap-1.5 text-emerald-400"><div className="w-2.5 h-2.5 rounded-full bg-emerald-400" /> Clarity</span>
+              <span className="flex items-center gap-1.5 text-indigo-400"><div className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> Domain</span>
+            </div>
+          </div>
 
-          <div className="grid grid-cols-3 gap-4 items-end h-48 pt-6 px-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl">
-            {/* Tech Bar */}
-            <div className="flex flex-col items-center gap-2 h-full justify-end">
-              <span className="text-xs font-bold text-cyan-400">{techAccuracy}%</span>
-              <div className="w-full max-w-[60px] bg-cyan-500/20 border border-cyan-400/40 rounded-t-xl transition-all duration-1000 relative overflow-hidden" style={{ height: `${techAccuracy}%` }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-cyan-500 to-cyan-300 opacity-80" />
+          {/* Grouped Comparison Bars Container */}
+          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-6 space-y-5">
+            
+            {/* Horizontal Combined Comparison Stack */}
+            <div className="space-y-4">
+              {/* Technical Bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-slate-300 font-semibold">
+                  <span>Technical Skills</span>
+                  <span className="text-cyan-400">{techAccuracy}%</span>
+                </div>
+                <div className="w-full bg-slate-900 h-4 rounded-full overflow-hidden border border-slate-800">
+                  <div className="bg-gradient-to-r from-cyan-500 to-cyan-300 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(34,211,238,0.5)]" style={{ width: `${techAccuracy}%` }} />
+                </div>
               </div>
-              <span className="text-[11px] font-semibold text-slate-400">Technical</span>
+
+              {/* Communication Clarity Bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-slate-300 font-semibold">
+                  <span>Communication Clarity</span>
+                  <span className="text-emerald-400">{commClarity}%</span>
+                </div>
+                <div className="w-full bg-slate-900 h-4 rounded-full overflow-hidden border border-slate-800">
+                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-300 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(52,211,153,0.5)]" style={{ width: `${commClarity}%` }} />
+                </div>
+              </div>
+
+              {/* Domain Knowledge Bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs text-slate-300 font-semibold">
+                  <span>Domain Expertise</span>
+                  <span className="text-indigo-400">{domainKnowledge}%</span>
+                </div>
+                <div className="w-full bg-slate-900 h-4 rounded-full overflow-hidden border border-slate-800">
+                  <div className="bg-gradient-to-r from-indigo-600 to-indigo-400 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(99,102,241,0.5)]" style={{ width: `${domainKnowledge}%` }} />
+                </div>
+              </div>
             </div>
 
-            {/* Comm Bar */}
-            <div className="flex flex-col items-center gap-2 h-full justify-end">
-              <span className="text-xs font-bold text-emerald-400">{commClarity}%</span>
-              <div className="w-full max-w-[60px] bg-emerald-500/20 border border-emerald-400/40 rounded-t-xl transition-all duration-1000 relative overflow-hidden" style={{ height: `${commClarity}%` }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-emerald-500 to-emerald-300 opacity-80" />
-              </div>
-              <span className="text-[11px] font-semibold text-slate-400">Clarity</span>
-            </div>
-
-            {/* Domain Bar */}
-            <div className="flex flex-col items-center gap-2 h-full justify-end">
-              <span className="text-xs font-bold text-indigo-400">{domainKnowledge}%</span>
-              <div className="w-full max-w-[60px] bg-indigo-500/20 border border-indigo-400/40 rounded-t-xl transition-all duration-1000 relative overflow-hidden" style={{ height: `${domainKnowledge}%` }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-indigo-600 to-indigo-400 opacity-80" />
-              </div>
-              <span className="text-[11px] font-semibold text-slate-400">Domain</span>
-            </div>
           </div>
         </div>
 
-        {/* Detailed Question & Answer Breakdown */}
+        {/* Detailed Q&A Log */}
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl space-y-6">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-indigo-400" /> Q&A Detailed Log & Verbal Evaluation
