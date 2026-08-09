@@ -26,26 +26,7 @@ export default function InterviewPage() {
     resumeText?: string;
   } | null>(null);
 
-<<<<<<< HEAD
-    // 1. Session & Local Storage Config Package
-    const interviewConfig = {
-      role,
-      seniority,
-      topic,
-      jdText: jdText.trim(),
-      resumeText: resumeText.trim(),
-    };
-
-    // Save Context for Interview Session
-    sessionStorage.setItem("active_interview_config", JSON.stringify(interviewConfig));
-    localStorage.setItem("active_interview_config", JSON.stringify(interviewConfig));
-    sessionStorage.removeItem("qa_history"); // Reset previous interview history
-
-    // ✅ FIXED: Active Interview Room Route (/interview/1)
-    router.push("/interview/1");
-  };
-=======
-  // Fetch Real-world Interview Question from Gemini API
+  // Fetch Question from Gemini API
   const fetchNextQuestion = useCallback(async (config: any, previousAns: string) => {
     try {
       const res = await fetch("/api/interview/question", {
@@ -73,7 +54,7 @@ export default function InterviewPage() {
     }
   }, []);
 
-  // Sync Session Config from Setup
+  // Initialize Session
   useEffect(() => {
     const savedConfig = sessionStorage.getItem("active_interview_config");
     if (savedConfig) {
@@ -81,6 +62,7 @@ export default function InterviewPage() {
       setSessionConfig(parsed);
       fetchNextQuestion(parsed, "");
     } else {
+      // Default fallback
       const defaultConfig = { role: "Software Engineer", seniority: "Mid-Level", topic: "Technical Core" };
       setSessionConfig(defaultConfig);
       fetchNextQuestion(defaultConfig, "");
@@ -105,13 +87,10 @@ export default function InterviewPage() {
       setIsSubmitting(false);
     }
   }, [isSubmitting, currentAnswer, question, questionCount, totalQuestions, router, sessionConfig, fetchNextQuestion]);
->>>>>>> c5c6e3c (Add StarBackground to interview page, fix Tailwind gradient underline warnings, and sync setup context)
 
   return (
     <div className="min-h-screen text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
-      {/* Dynamic Moving Stars Canvas Background */}
       <StarBackground />
-
       <Navbar />
 
       <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-28 pb-12 space-y-6 relative z-10">
@@ -123,19 +102,9 @@ export default function InterviewPage() {
               <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
                 {sessionConfig?.topic || "Technical Core"} • Question {questionCount} of {totalQuestions}
               </span>
-              {sessionConfig?.resumeText && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  <FileText className="w-3 h-3" /> Resume Parsed
-                </span>
-              )}
-              {sessionConfig?.jdText && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
-                  <Briefcase className="w-3 h-3" /> JD Matched
-                </span>
-              )}
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Software Engineer"}</span> ({sessionConfig?.seniority || "Mid-Level"})
+              Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Software Engineer"}</span>
             </p>
           </div>
 
@@ -164,7 +133,7 @@ export default function InterviewPage() {
           <textarea
             value={currentAnswer}
             onChange={(e) => setCurrentAnswer(e.target.value)}
-            placeholder="Your voice transcription will stream here automatically. You can also edit or type manually..."
+            placeholder="Your voice transcription will stream here automatically..."
             className="w-full h-36 bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder:text-slate-600 backdrop-blur-md"
           />
 
@@ -175,7 +144,7 @@ export default function InterviewPage() {
             className="w-full py-3.5 hover:opacity-90 disabled:opacity-50 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 cursor-pointer"
           >
             {isSubmitting ? (
-              <>Analyzing Answer & Generating Contextual Question...</>
+              "Processing..."
             ) : questionCount === totalQuestions ? (
               <>Finish Interview & View Scorecard <Sparkles className="w-4 h-4" /></>
             ) : (
@@ -184,7 +153,6 @@ export default function InterviewPage() {
           </button>
         </div>
       </main>
-
       <Footer />
     </div>
   );
