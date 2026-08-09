@@ -19,7 +19,7 @@ export default function InterviewSetupPage() {
   const handleStartInterview = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Session Storage Config Package
+    // 1. Session & Local Storage Config Package
     const interviewConfig = {
       role,
       seniority,
@@ -30,10 +30,11 @@ export default function InterviewSetupPage() {
 
     // Save Context for Interview Session
     sessionStorage.setItem("active_interview_config", JSON.stringify(interviewConfig));
+    localStorage.setItem("active_interview_config", JSON.stringify(interviewConfig));
     sessionStorage.removeItem("qa_history"); // Reset previous interview history
 
-    // Navigate to Interview Workspace
-    router.push("/interview");
+    // ✅ FIXED: Active Interview Room Route (/interview/1)
+    router.push("/interview/1");
   };
 
   return (
