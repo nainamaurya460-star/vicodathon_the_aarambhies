@@ -26,7 +26,11 @@ export default function InterviewPage() {
     resumeText?: string;
   } | null>(null);
 
+<<<<<<< HEAD
   // Fetch Real-world Interview Question from Gemini API
+=======
+  // Fetch Question from Gemini API
+>>>>>>> b991c99
   const fetchNextQuestion = useCallback(async (config: any, previousAns: string) => {
     try {
       const res = await fetch("/api/interview/question", {
@@ -54,7 +58,11 @@ export default function InterviewPage() {
     }
   }, []);
 
+<<<<<<< HEAD
   // Sync Session Config from Setup
+=======
+  // Initialize Session
+>>>>>>> b991c99
   useEffect(() => {
     const savedConfig = sessionStorage.getItem("active_interview_config");
     if (savedConfig) {
@@ -62,6 +70,10 @@ export default function InterviewPage() {
       setSessionConfig(parsed);
       fetchNextQuestion(parsed, "");
     } else {
+<<<<<<< HEAD
+=======
+      // Default fallback
+>>>>>>> b991c99
       const defaultConfig = { role: "Software Engineer", seniority: "Mid-Level", topic: "Technical Core" };
       setSessionConfig(defaultConfig);
       fetchNextQuestion(defaultConfig, "");
@@ -89,9 +101,7 @@ export default function InterviewPage() {
 
   return (
     <div className="min-h-screen text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
-      {/* Dynamic Moving Stars Canvas Background */}
       <StarBackground />
-
       <Navbar />
 
       <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-28 pb-12 space-y-6 relative z-10">
@@ -103,6 +113,7 @@ export default function InterviewPage() {
               <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
                 {sessionConfig?.topic || "Technical Core"} • Question {questionCount} of {totalQuestions}
               </span>
+<<<<<<< HEAD
               {sessionConfig?.resumeText && (
                 <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                   <FileText className="w-3 h-3" /> Resume Parsed
@@ -116,6 +127,11 @@ export default function InterviewPage() {
             </div>
             <p className="text-xs text-slate-400 mt-1">
               Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Software Engineer"}</span> ({sessionConfig?.seniority || "Mid-Level"})
+=======
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Software Engineer"}</span>
+>>>>>>> b991c99
             </p>
           </div>
 
@@ -144,7 +160,11 @@ export default function InterviewPage() {
           <textarea
             value={currentAnswer}
             onChange={(e) => setCurrentAnswer(e.target.value)}
+<<<<<<< HEAD
             placeholder="Your voice transcription will stream here automatically. You can also edit or type manually..."
+=======
+            placeholder="Your voice transcription will stream here automatically..."
+>>>>>>> b991c99
             className="w-full h-36 bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder:text-slate-600 backdrop-blur-md"
           />
 
@@ -155,7 +175,11 @@ export default function InterviewPage() {
             className="w-full py-3.5 hover:opacity-90 disabled:opacity-50 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 cursor-pointer"
           >
             {isSubmitting ? (
+<<<<<<< HEAD
               <>Analyzing Answer & Generating Contextual Question...</>
+=======
+              "Processing..."
+>>>>>>> b991c99
             ) : questionCount === totalQuestions ? (
               <>Finish Interview & View Scorecard <Sparkles className="w-4 h-4" /></>
             ) : (
@@ -164,7 +188,6 @@ export default function InterviewPage() {
           </button>
         </div>
       </main>
-
       <Footer />
     </div>
   );
