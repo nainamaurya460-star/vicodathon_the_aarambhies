@@ -1,58 +1,28 @@
-# 🚀 AI Mock Interview Platform — Team The Aarambhies
+# 🚀 AI Mock Interview Platform
 
-> An intelligent, real-time AI-powered technical and behavioral interview platform designed to conduct adaptive mock sessions, deliver deep performance analytics, and issue verifiable Job Readiness Badges.
+An AI-powered contextual mock interview system designed to help candidates practice real-time technical assessments through continuous speech recognition, immediate verbal feedback, and detailed performance scorecards.
 
----
+## ✨ Key Features
+* **Contextual Interview Setup:** Tailors questions based on target roles, job descriptions, and candidate profiles.
+* **Continuous Speech Recognition:** Speech-to-text logic that allows users to pause and think without auto-submitting answers.
+* **Real-time Question Evaluation:** Glassmorphism pop-up modal providing dynamic performance feedback and next-question routing.
+* **Interactive Evaluation Scorecard:** Comprehensive `/report` dashboard featuring skill competency breakdown graphs, communication metrics, and full Q&A transcripts.
 
-## 🌟 Key Features & Phase Breakdowns
-
-### 🟢 Phase 1: Dynamic Candidate Onboarding & Scope Setup
-* **Target Role & Seniority Selector:** Custom options for Software Engineer, UI/UX Designer, Data Analyst, AI/ML Engineer across Junior, Mid-Level, and Senior tiers.
-* **Context-Aware Customization:** Option to input specific Job Descriptions (JD) and Resume summaries for tailored questions.
-* **4-Card Round Types:** Supports General HR/Behavioral (STAR method), Technical Core, Coding/DSA, and System Design rounds.
-
-### 🟢 Phase 2: Interactive AI Interview Workspace
-* **Adaptive Question Generator:** Powered by Gemini 1.5 Flash API for real-time dynamic questioning and context-based follow-ups.
-* **Per-Question Live Countdown Timer:** Integrated 2-minute circular countdown timer widget (`QuestionTimer.tsx`) with automatic response submission.
-* **Dual Input Mode:** Live Web Speech API voice transcription (`VoiceRecorder.tsx`) paired with a manual text editing area.
-* **Speech Synthesis (Voice Questions):** Built-in browser text-to-speech engine (`window.speechSynthesis`) to deliver natural human interviewer voice interactions.
-
-### 🟢 Phase 3: AI Evaluation & Deep Feedback Engine
-* **Multi-Metric Scoring:** Detailed breakdown out of 100 covering Technical Accuracy, Communication Clarity, and Candidate Confidence.
-* **Gap Analysis & Skill Roadmap:** Automated identification of missing technical terms and weak areas rendered via `SkillGapRoadmap.tsx`.
-* **Side-by-Side Model Answers:** Candidate responses paired with AI Ideal Answers for immediate self-evaluation.
-
-### 🟢 Phase 4: AB Talks Ecosystem Integration
-* **+50 Synergy Points Rewards:** Animated achievement banner awarded upon session completion.
-* **Verifiable Job Readiness Badge:** Downloadable and shareable web card (`ShareableBadge.tsx`) showcasing job-readiness scores (e.g., "88% Job Ready for SDE-1").
-* **Targeted Learning Tracks:** Direct course and skill recommendations linked within the feedback report.
-
----
-
-## 🛠️ Tech Stack & Architecture
-
-* **Framework:** Next.js 16 (App Router) + React 19
+## 🛠️ Tech Stack
+* **Framework:** Next.js (App Router)
+* **Styling:** Tailwind CSS, Lucide React Icons
 * **Language:** TypeScript
-* **Styling:** Tailwind CSS + Lucide React Icons
-* **AI Engine:** Google Gemini 1.5 Flash API
-* **Speech Services:** Web Speech API (STT & TTS)
-* **State Management:** SessionStorage Context Persistence
+* **Voice Processing:** Web Speech API (Continuous Recognition Mode)
 
----
+## 🚀 Getting Started
 
-## 📂 Repository Structure
+### Prerequisites
+* Node.js (v18.x or higher)
+* npm or yarn
 
-```text
-├── public/                     # Static assets and media
-├── src/
-│   ├── app/
-│   │   ├── api/                # Gemini API routes (question, evaluate, report)
-│   │   ├── interview/          # Workspace & Setup pages
-│   │   ├── report/             # Final Scorecard & Analytics pages
-│   │   ├── globals.css         # Global styles & Tailwind layers
-│   │   └── page.tsx            # Landing Page
-│   ├── components/
-│   │   ├── ui/                 # Reusable UI elements (Navbar, Footer, Timer, VoiceRecorder)
-│   │   ├── ShareableBadge.tsx   # Job Readiness Badge component
-│   │   └── SkillGapRoadmap.tsx # Weakness Analysis component
-│   └── lib/                    # AI Clients & Helper utilities
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/nainamaurya460-star/vicodathon_the_aarambhies.git](https://github.com/nainamaurya460-star/vicodathon_the_aarambhies.git)
+   cd vicodathon_the_aarambhies
