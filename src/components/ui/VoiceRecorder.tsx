@@ -1,111 +1,113 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, MicOff, AlertCircle } from "lucide-react";
+import { Mic, MicOff } from "lucide-react";
 
 interface VoiceRecorderProps {
   onTranscriptChange: (text: string) => void;
-  disabled?: boolean;
 }
 
-export default function VoiceRecorder({ onTranscriptChange, disabled }: VoiceRecorderProps) {
-  const [isListening, setIsListening] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function VoiceRecorder({ onTranscriptChange }: VoiceRecorderProps) {
+  const [isRecording, setIsRecording] = useState(false);
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    // Check if browser supports Web Speech API
+    if (typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = "en-US";
 
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current.onresult = (event: any) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript.trim()) {
+          onTranscriptChange(transcript);
+        }
+      };
 
-    if (!SpeechRecognition) {
-      setError("Speech recognition is not supported in this browser. Please type your response.");
-      return;
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech Recognition Error:", event.error);
+        stopRecording();
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+      };
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event: any) => {
-      let currentTranscript = "";
-      for (let i = 0; i < event.results.length; i++) {
-        currentTranscript += event.results[i][0].transcript;
-      }
-      onTranscriptChange(currentTranscript);
-    };
-
-    recognition.onerror = (event: any) => {
-      if (event.error === "not-allowed") {
-        setError("Microphone permission denied. Please allow mic access or type manually.");
-        setIsListening(false);
-      } else if (event.error === "network") {
-        // Silently capture network drops without blocking speech input state
-        setError("Voice network drop detected. Type your answer below or click button to retry mic.");
-        setIsListening(false);
-      } else if (event.error !== "no-speech") {
-        setIsListening(false);
+    return () => {
+      // Cleanup on unmount: Abort any active recognition
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
       }
     };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognitionRef.current = recognition;
   }, [onTranscriptChange]);
 
-  const toggleListening = () => {
-    if (!recognitionRef.current) return;
-
-    if (isListening) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {}
-      setIsListening(false);
-    } else {
-      setError(null);
+  const startRecording = () => {
+    if (recognitionRef.current) {
       try {
         recognitionRef.current.start();
-        setIsListening(true);
+        setIsRecording(true);
       } catch (err) {
-        setIsListening(false);
+        console.error("Failed to start speech recognition:", err);
       }
+    } else {
+      alert("Speech Recognition is not supported in your browser.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      try {
+        // Stop capturing audio immediately
+        recognitionRef.current.stop();
+        recognitionRef.current.abort(); // FORCE CLEAR BUFFER & LISTENERS
+      } catch (err) {
+        console.error("Failed to stop speech recognition:", err);
+      }
+    }
+    setIsRecording(false);
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
     }
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={toggleListening}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-            isListening
-              ? "bg-rose-500/10 border-rose-500/50 text-rose-400 animate-pulse shadow-lg shadow-rose-500/20"
-              : "bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800"
-          } disabled:opacity-50`}
-        >
-          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-          {isListening ? "Stop Recording" : "Start Voice Input"}
-        </button>
-
-        {isListening && (
-          <span className="text-xs text-rose-400 flex items-center gap-1.5 animate-pulse font-medium">
-            <span className="w-2 h-2 rounded-full bg-rose-500" /> Transcribing speech in real-time...
-          </span>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={toggleRecording}
+        className={`relative flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-xs transition-all ${
+          isRecording
+            ? "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-pulse"
+            : "bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30"
+        }`}
+      >
+        {isRecording ? (
+          <>
+            {/* Active Recording Ripple Effect */}
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            <MicOff className="w-4 h-4" /> Stop Recording
+          </>
+        ) : (
+          <>
+            <Mic className="w-4 h-4 text-purple-400" /> Start Voice Input
+          </>
         )}
-      </div>
-
-      {error && (
-        <div className="flex items-center gap-2 text-amber-400 text-xs bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-lg">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
+      </button>
     </div>
   );
 }

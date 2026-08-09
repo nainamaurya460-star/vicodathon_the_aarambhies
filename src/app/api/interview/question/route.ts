@@ -1,84 +1,79 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// Prevent Vercel/Next.js from caching dynamic interview questions
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function POST(req: Request) {
-  let activeTopic = "Technical Core";
-
   try {
     const body = await req.json();
-    const role: string = body?.role || "Software Engineer";
-    const seniority: string = body?.seniority || "Mid-Level";
-    const topic: string = body?.topic || "Technical Core";
-    const previousAnswer: string = body?.previousAnswer || "";
-    
-    // Context Customization Parameters (Optional)
-    const jdText: string = body?.jdText || "";
-    const resumeText: string = body?.resumeText || "";
+    const { role, seniority, topic, previousAnswer } = body;
 
-    activeTopic = topic;
-
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    // Round Persona Identification
-    const roundLower = topic.toLowerCase();
-    const isHR = roundLower.includes("hr") || roundLower.includes("behavioral");
-    const isCoding = roundLower.includes("coding") || roundLower.includes("dsa");
-    const isSystemDesign = roundLower.includes("system design") || roundLower.includes("architecture");
-
-    let prompt = `You are an interviewer conducting a ${seniority} level interview for the role of ${role}. Focus Round: ${topic}.\n`;
-
-    // Inject Context Customization if provided
-    if (jdText.trim()) {
-      prompt += `\nTarget Job Description Context: "${jdText.trim().slice(0, 500)}". Ask questions relevant to these skills.`;
-    }
-    if (resumeText.trim()) {
-      prompt += `\nCandidate Resume Context: "${resumeText.trim().slice(0, 500)}". Frame questions around candidate's past work or technologies listed here.`;
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY is not configured" },
+        { status: 500 }
+      );
     }
 
-    // Round-Specific Prompt Logic
-    if (isHR) {
-      prompt += `\nRole: HR Manager. Focus on soft skills, teamwork, situational behavior, or career motivations. Do NOT ask technical questions.`;
-    } else if (isCoding) {
-      prompt += `\nRole: Tech Lead. Focus on data structures, algorithms, time/space complexity ($O(N)$), or edge cases.`;
-    } else if (isSystemDesign) {
-      prompt += `\nRole: Principal Architect. Focus on scalability, microservices, database design, caching, or API architecture.`;
-    } else {
-      prompt += `\nRole: Senior Technical Interviewer. Focus on core technical domain knowledge and hands-on concepts.`;
+    // Dynamic timestamp seed to break deterministic AI caching
+    const timestampSeed = Date.now();
+
+    const prompt = `
+You are a expert technical interviewer conducting a live interactive session.
+
+Candidate Details:
+- Role: ${role || "Software Engineer"}
+- Seniority Level: ${seniority || "Mid-Level"}
+- Round / Topic: ${topic || "Technical Core"}
+- Previous Response: "${previousAnswer || "None (First Question of the Session)"}"
+- Session Seed: ${timestampSeed}
+
+INSTRUCTION:
+1. Generate ONE concise, clear, and challenging technical interview question tailored to this role and topic.
+2. If a previous answer is provided, probe deeper into their explanation or pivot logically to a relevant follow-up topic.
+3. NEVER repeat generic questions.
+4. Return ONLY valid JSON with no markdown formatting around it:
+
+{
+  "question": "<Your dynamic question text here?>"
+}
+    `;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { 
+            responseMimeType: "application/json",
+            temperature: 0.8 // High randomness to ensure distinct questions
+          },
+        }),
+      }
+    );
+
+    const data = await response.json();
+    const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (textResponse) {
+      const parsedData = JSON.parse(textResponse);
+      return NextResponse.json(parsedData);
     }
 
-    if (previousAnswer) {
-      prompt += `\nThe candidate previously answered: "${previousAnswer}".
-Ask a sharp, concise follow-up question based directly on their response.`;
-    } else {
-      prompt += `\nAsk an opening question to start the interview session.`;
-    }
-
-    prompt += `\nReturn ONLY the interview question text. Keep it under 25 words. No markdown bullet points or conversational filler.`;
-
-    const result = await model.generateContent(prompt);
-    const generatedQuestion = result.response.text().trim();
-
-    return NextResponse.json({ question: generatedQuestion });
-  } catch (error) {
-    console.error("Gemini Question API Error:", error);
-
-    // Fallbacks
-    const hrFallbacks = [
-      "Could you introduce yourself and walk me through your professional background?",
-      "Tell me about a time you faced a disagreement within a team and how you resolved it.",
-    ];
-    const techFallbacks = [
-      `What are the key performance considerations when scaling ${activeTopic}?`,
-      "How do you handle error boundaries and asynchronous state management in production?",
-    ];
-
-    const isHR = activeTopic.toLowerCase().includes("hr") || activeTopic.toLowerCase().includes("behavioral");
-    const selectedFallbacks = isHR ? hrFallbacks : techFallbacks;
-    
-    return NextResponse.json({ 
-      question: selectedFallbacks[Math.floor(Math.random() * selectedFallbacks.length)] 
+    // Dynamic Fallback in case API parsing encounters an issue
+    return NextResponse.json({
+      question: `Could you explain the key performance trade-offs you consider when architecting solutions for ${topic || "Technical Core"}?`
     });
+
+  } catch (error) {
+    console.error("Question Generation Error:", error);
+    return NextResponse.json(
+      { error: "Failed to generate dynamic question" },
+      { status: 500 }
+    );
   }
 }
