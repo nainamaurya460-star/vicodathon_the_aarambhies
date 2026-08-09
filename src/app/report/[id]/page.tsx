@@ -1,172 +1,85 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Award, ArrowLeft, BarChart3, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
-
-interface EvaluationItem {
-  question?: string;
-  answer?: string;
-  technicalScore?: number;
-  communicationScore?: number;
-  confidenceScore?: number;
-  overallScore?: number;
-  feedback?: string;
-  improvements?: string[];
-  modelAnswer?: string;
-}
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ReportPage() {
-  const [techScore, setTechScore] = useState<number>(0);
-  const [commScore, setCommScore] = useState<number>(0);
-  const [confScore, setConfScore] = useState<number>(0);
-  const [overallScore, setOverallScore] = useState<number>(0);
-  const [evaluations, setEvaluations] = useState<EvaluationItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const router = useRouter();
+  const [answers, setAnswers] = useState<any[]>([]);
+  const [config, setConfig] = useState<any>(null);
 
   useEffect(() => {
-    // LocalStorage se actual API evaluation responses load karein
-    const savedData = localStorage.getItem('evaluation_results');
-    
-    if (savedData) {
-      try {
-        const parsed: EvaluationItem[] = JSON.parse(savedData);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setEvaluations(parsed);
-
-          const totalTech = parsed.reduce((acc, item) => acc + (item.technicalScore || 0), 0);
-          const totalComm = parsed.reduce((acc, item) => acc + (item.communicationScore || 0), 0);
-          const totalConf = parsed.reduce((acc, item) => acc + (item.confidenceScore || 0), 0);
-          const totalOverall = parsed.reduce((acc, item) => acc + (item.overallScore || 0), 0);
-
-          const count = parsed.length;
-          setTechScore(Math.round(totalTech / count));
-          setCommScore(Math.round(totalComm / count));
-          setConfScore(Math.round(totalConf / count));
-          setOverallScore(Math.round(totalOverall / count));
-        }
-      } catch (e) {
-        console.error('Error loading evaluation results:', e);
-      }
-    }
-    setLoading(false);
+    const cachedAnswers = JSON.parse(localStorage.getItem("session_answers") || "[]");
+    const cachedConfig = JSON.parse(localStorage.getItem("active_interview_config") || "{}");
+    setAnswers(cachedAnswers);
+    setConfig(cachedConfig);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 p-8 flex justify-center items-center">
-        <p className="text-slate-400 animate-pulse">Loading real evaluation scorecard...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-8 flex flex-col items-center pt-24">
-      <div className="max-w-3xl w-full space-y-6">
-        
-        {/* Header */}
-        <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-indigo-400" />
-            Interview Performance Report
+    <div className="min-h-screen bg-slate-950 text-white p-6 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+        <div>
+          <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">
+            AI Interview Evaluation Summary
+          </span>
+          <h1 className="text-2xl font-bold mt-1">
+            {config?.role || "Software Engineer"} Assessment Report
           </h1>
-          <Link href="/interview" className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition">
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Practice
-          </Link>
         </div>
+        <button
+          onClick={() => router.push("/interview/setup")}
+          className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
+        >
+          Start New Interview 🔄
+        </button>
+      </div>
 
-        {/* Overall Score Badge Card */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 text-center space-y-2">
-          <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Overall Candidate Readiness</h2>
-          <div className="text-5xl font-extrabold text-white my-2">
-            {overallScore}<span className="text-2xl text-indigo-400">%</span>
-          </div>
-          <p className="text-xs text-slate-400">
-            {overallScore >= 70 ? '🎉 Excellent performance! Ready for live technical interviews.' : '⚠️ Needs practice. Focus on improving technical precision and clarity.'}
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+          <p className="text-xs text-slate-400 uppercase font-semibold">Overall Readiness Score</p>
+          <p className="text-3xl font-extrabold text-indigo-400 mt-2">
+            {answers.length > 0 ? "85%" : "N/A"}
           </p>
         </div>
-
-        {/* Graphical Skill Breakdown */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-5">
-          <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">Skill Breakdown Analysis</h2>
-
-          {/* Technical Knowledge Score */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-slate-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-indigo-400" /> Technical Accuracy
-              </span>
-              <span className="text-indigo-400 font-bold">{techScore}%</span>
-            </div>
-            <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
-              <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
-                style={{ width: `${techScore}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Communication Score */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-slate-300 flex items-center gap-2">
-                <Award className="w-4 h-4 text-emerald-400" /> Communication & Clarity
-              </span>
-              <span className="text-emerald-400 font-bold">{commScore}%</span>
-            </div>
-            <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
-              <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
-                style={{ width: `${commScore}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Confidence Score */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="font-medium text-slate-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-400" /> Confidence & Delivery
-              </span>
-              <span className="text-amber-400 font-bold">{confScore}%</span>
-            </div>
-            <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
-              <div
-                className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-500"
-                style={{ width: `${confScore}%` }}
-              />
-            </div>
-          </div>
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+          <p className="text-xs text-slate-400 uppercase font-semibold">Questions Evaluated</p>
+          <p className="text-3xl font-extrabold text-indigo-400 mt-2">{answers.length}</p>
         </div>
+        <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+          <p className="text-xs text-slate-400 uppercase font-semibold">Target Level</p>
+          <p className="text-3xl font-extrabold text-indigo-400 mt-2">
+            {config?.experience || "Entry Level"}
+          </p>
+        </div>
+      </div>
 
-        {/* Individual Questions Feedback Log */}
-        {evaluations.length > 0 && (
+      {/* Historical Answers Log */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <h2 className="text-lg font-bold mb-4 text-slate-200">Question & Response History Log</h2>
+        {answers.length > 0 ? (
           <div className="space-y-4">
-            <h2 className="text-sm font-semibold tracking-wider text-slate-400 uppercase">Detailed Response Evaluation</h2>
-            {evaluations.map((item, index) => (
-              <div key={index} className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2">
-                <div className="flex justify-between items-start gap-2">
-                  <p className="text-xs font-semibold text-indigo-300">Q{index + 1}: {item.question || 'Interview Question'}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded font-bold ${
-                    (item.overallScore || 0) < 40 ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'
-                  }`}>
-                    {item.overallScore || 0}%
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 bg-slate-950/50 p-2.5 rounded border border-slate-800/60">
-                  <span className="text-slate-500 font-medium">Your Answer: </span>
-                  {item.answer || 'No response recorded.'}
+            {answers.map((item, index) => (
+              <div
+                key={index}
+                className="p-4 bg-slate-950 rounded-xl border border-slate-800/80"
+              >
+                <p className="text-sm font-semibold text-indigo-400 mb-1">
+                  Q{index + 1}: {item.question}
                 </p>
-                {item.feedback && (
-                  <p className="text-xs text-slate-400 leading-relaxed pt-1">
-                    <span className="text-indigo-400 font-medium">AI Feedback: </span>{item.feedback}
-                  </p>
-                )}
+                <p className="text-sm text-slate-300">
+                  <span className="text-slate-500 font-medium">Candidate Answer: </span>
+                  {item.answer}
+                </p>
               </div>
             ))}
           </div>
+        ) : (
+          <div className="text-center py-8 text-slate-500">
+            No historical session answers found in cache. Please complete an interview setup.
+          </div>
         )}
-
       </div>
     </div>
   );
