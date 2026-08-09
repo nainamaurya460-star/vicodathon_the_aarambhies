@@ -1,86 +1,116 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Clock, AlertCircle } from "lucide-react";
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Clock, AlertTriangle } from "lucide-react";
 
 interface QuestionTimerProps {
-  timeLeft: number; // Time in seconds
+  durationInSeconds?: number;
+  onTimeUp?: () => void;
+  keyTrigger?: string | number;
 }
 
-export const QuestionTimer = ({ timeLeft }: QuestionTimerProps) => {
-  const minutes = Math.floor(timeLeft / 60).toString().padStart(2, "0");
-  const seconds = (timeLeft % 60).toString().padStart(2, "0");
+export default function QuestionTimer({
+  durationInSeconds = 120,
+  onTimeUp,
+  keyTrigger,
+}: QuestionTimerProps) {
+  const [timeLeft, setTimeLeft] = useState(durationInSeconds);
 
-  // 1. Countdown logic (Seperated from triggering callbacks)
+  // Maintain fresh callback ref to avoid effect restart loops
+  const onTimeUpRef = useRef(onTimeUp);
   useEffect(() => {
-    if (isPaused || timeLeft <= 0) return;
+    onTimeUpRef.current = onTimeUp;
+  }, [onTimeUp]);
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+  // Reset timer on new question trigger or duration change
+  useEffect(() => {
+    setTimeLeft(durationInSeconds);
+  }, [durationInSeconds, keyTrigger]);
+
+  // Countdown timer logic
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      if (onTimeUpRef.current) {
+        onTimeUpRef.current();
+      }
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => Math.max(0, prev - 1));
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [timeLeft, isPaused]);
+    return () => clearInterval(interval);
+  }, [timeLeft]);
 
-  // 2. Safe TimeUp Trigger (Wrapped in Microtask/Timeout to prevent React Render Phase Conflict)
-  useEffect(() => {
-    if (timeLeft === 0 && onTimeUp) {
-      const timeout = setTimeout(() => {
-        onTimeUp();
-      }, 0);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [timeLeft, onTimeUp]);
-
+  // Format MM:SS
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const isWarning = timeLeft <= 30 && timeLeft > 0;
-  const isTimeUp = timeLeft === 0;
+  const formattedTime = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+  // Calculated percentage for SVG circular ring
+  const progressPercentage = (timeLeft / durationInSeconds) * 100;
+  const strokeDashoffset = 100 - progressPercentage;
+
+  const isLowTime = timeLeft <= 20;
 
   return (
     <div
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl border backdrop-blur-md transition-all ${
-        isTimeUp
-          ? "border-red-600 bg-red-950/80 text-red-300 animate-bounce shadow-[0_0_20px_rgba(239,68,68,0.4)]"
-          : isWarning
-          ? "border-red-500/50 bg-red-500/10 text-red-400 animate-pulse"
-          : "border-purple-500/20 bg-purple-500/5 text-purple-200"
+      className={`relative flex items-center gap-3 px-3.5 py-2 rounded-xl border backdrop-blur-md transition-all duration-300 ${
+        isLowTime
+          ? "bg-red-950/40 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.25)] animate-pulse"
+          : "bg-slate-900/80 border-slate-800/80 shadow-lg hover:border-slate-700"
       }`}
     >
-      {isTimeUp ? (
-        <AlertCircle className="w-4 h-4 text-red-400 animate-spin" />
-      ) : (
-        <Clock className="w-4 h-4" />
-      )}
+      {/* Interactive Circular Progress Bar */}
+      <div className="relative w-7 h-7 flex items-center justify-center">
+        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+          {/* Background Ring */}
+          <path
+            className={isLowTime ? "text-red-900/40" : "text-slate-800"}
+            strokeWidth="3.5"
+            stroke="currentColor"
+            fill="none"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          />
+          {/* Animated Progress Ring */}
+          <path
+            className={`transition-all duration-500 ease-linear ${
+              isLowTime ? "text-red-500" : "text-indigo-500"
+            }`}
+            strokeDasharray="100, 100"
+            strokeDashoffset={strokeDashoffset}
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            stroke="currentColor"
+            fill="none"
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          />
+        </svg>
 
-      <span className="font-mono text-sm font-semibold">
-        {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
-  // Warning state jab 15 seconds se kam time bacha ho
-  const isWarning = timeLeft <= 15;
+        {/* Center Status Icon */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {isLowTime ? (
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400 animate-bounce" />
+          ) : (
+            <Clock className="w-3.5 h-3.5 text-indigo-400" />
+          )}
+        </div>
+      </div>
 
-  return (
-    <div className="w-full max-w-xs mx-auto my-3 p-3 rounded-xl bg-slate-900/90 border border-slate-800/80 backdrop-blur-sm shadow-xl flex flex-col items-center justify-center transition-all">
-      <span className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-1">
-        Time Remaining
-      </span>
-      <span
-        className={`text-3xl md:text-4xl font-extrabold tracking-wider transition-colors duration-300 ${
-          isWarning ? "text-red-500 animate-pulse" : "text-cyan-400"
-        }`}
-      >
-        {minutes}:{seconds}
-      </span>
-
-      {/* Visual Time's Up Indicator */}
-      {isTimeUp && (
-        <span className="text-xs font-sans font-bold text-red-300 ml-1 border-l border-red-500/40 pl-2">
-          Time's Up! Submitting...
+      {/* Countdown Digital Display */}
+      <div className="flex flex-col">
+        <span className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider leading-none">
+          {isLowTime ? "Time Expiring" : "Time Remaining"}
         </span>
-      )}
+        <span
+          className={`font-mono text-sm font-bold tracking-wider leading-tight ${
+            isLowTime ? "text-red-400" : "text-white"
+          }`}
+        >
+          {formattedTime}
+        </span>
+      </div>
     </div>
   );
-};
-
-export default QuestionTimer;
+}
