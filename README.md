@@ -15,7 +15,8 @@
 * 📸 **Demo Video & Socials:** [Watch on Instagram (@the_aarambhi)](https://www.instagram.com/the_aarambhi/)
 * 📄 **Prompt Engineering Documentation:** [`prompts.md`](./prompts.md)
 * 👥 **Team:** **The Aarambhies**
-
+* 🎥 **Demo Presentation Video:** [Watch Full Walkthrough on Google Drive] (https://drive.google.com/file/d/1Pqcb3I25sc4kPhCgQh3vev7_FXl--1e5/view?usp=drive_link)
+* 💼 **LinkedIn Post:** [View Project Announcement on LinkedIn](https://www.linkedin.com/posts/shikha-yadav-957510392_vicodathon2026-abtalks-firsthackathon-ugcPost-7492349296407678976-eXxf/?utm_source=share&utm_medium=member_desktop&rcm=ACoAAGCKMlMBjYeW5kKeMS3g-KkHKjn8Sa1Bj_U)
 ---
 
 ## 🎯 Problem Statement Alignment
