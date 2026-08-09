@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
@@ -32,9 +32,37 @@ export default function ActiveInterviewPage() {
     fetchNextQuestion(parsed, "");
   }, [router]);
 
-  // Handle Question Timer & Auto-Submit
+  // Handle Answer Submit & History Storage
+  const handleAnswerSubmit = useCallback(async () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setSubmitting(true);
+
+    const submittedText = userAnswer.trim() || "No response provided (Time Expired / Blank)";
+
+    // Save Q&A to Session Storage for Scorecard Report Page
+    const existingHistory = JSON.parse(sessionStorage.getItem("qa_history") || "[]");
+    const updatedHistory = [
+      ...existingHistory,
+      { question: question, answer: submittedText }
+    ];
+    sessionStorage.setItem("qa_history", JSON.stringify(updatedHistory));
+
+    if (questionCount >= 5) {
+      router.push("/report/1");
+      return;
+    }
+
+    const currentAns = submittedText;
+    setUserAnswer("");
+    setQuestionCount((prev) => prev + 1);
+
+    await fetchNextQuestion(config, currentAns);
+    setSubmitting(false);
+  }, [userAnswer, question, questionCount, config, router]);
+
+  // Handle Question Timer & Auto-Submit Event
   useEffect(() => {
-    if (loading) return; // Don't run timer while question is loading
+    if (loading) return;
 
     setTimeLeft(120); // Reset timer to 2 mins for new question
     if (timerRef.current) clearInterval(timerRef.current);
@@ -43,7 +71,8 @@ export default function ActiveInterviewPage() {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current as NodeJS.Timeout);
-          handleAutoSubmit(); // Time's up -> Auto Submit
+          alert("⏱️ Time Over! Aapka response automatically submit ho raha hai.");
+          handleAnswerSubmit(); // Auto Submit on Time Over
           return 0;
         }
         return prev - 1;
@@ -53,14 +82,9 @@ export default function ActiveInterviewPage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [questionCount, loading]);
+  }, [questionCount, loading, handleAnswerSubmit]);
 
-  const handleAutoSubmit = () => {
-    console.log("Time's up! Auto-submitting response...");
-    handleAnswerSubmit();
-  };
-
-  // Adaptive Loop: Candidate Answer -> Gemini API -> Next Dynamic Question
+  // Adaptive Question Generation
   const fetchNextQuestion = async (sessionConfig: any, previousAnswer: string) => {
     setLoading(true);
     try {
@@ -68,9 +92,9 @@ export default function ActiveInterviewPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          role: sessionConfig.role,
-          seniority: sessionConfig.seniority,
-          topic: sessionConfig.topic,
+          role: sessionConfig?.role,
+          seniority: sessionConfig?.seniority,
+          topic: sessionConfig?.topic,
           previousAnswer: previousAnswer,
         }),
       });
@@ -78,31 +102,14 @@ export default function ActiveInterviewPage() {
       if (data.question) {
         setQuestion(data.question);
       } else {
-        setQuestion(`In the context of ${sessionConfig.topic}, explain how you manage system scalability and edge cases.`);
+        setQuestion(`In the context of ${sessionConfig?.topic || "Technical Topics"}, explain how you manage system scalability and edge cases.`);
       }
     } catch (err) {
       console.error("Adaptive question generation error:", err);
-      setQuestion(`In the context of ${sessionConfig.topic}, explain how you manage system scalability and edge cases.`);
+      setQuestion(`In the context of ${sessionConfig?.topic || "Technical Topics"}, explain how you manage system scalability and edge cases.`);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAnswerSubmit = async () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setSubmitting(true);
-
-    if (questionCount >= 5) {
-      router.push("/interview/report");
-      return;
-    }
-
-    const currentAns = userAnswer;
-    setUserAnswer("");
-    setQuestionCount((prev) => prev + 1);
-
-    await fetchNextQuestion(config, currentAns);
-    setSubmitting(false);
   };
 
   // Format seconds to MM:SS
@@ -113,12 +120,18 @@ export default function ActiveInterviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between">
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between relative overflow-hidden">
+      {/* High-Tech Background Glows */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
+
       <Navbar />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full p-4 md:p-8 flex flex-col justify-center space-y-6">
+      {/* Main Container with pt-24 Padding to prevent Header Overlap */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-24 pb-8 relative z-10 flex flex-col justify-center space-y-6">
+        
         {/* Session Header & Live Timer Widget */}
-        <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800 shadow-lg">
           <div>
             <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">
               Question {questionCount} of 5
@@ -127,9 +140,9 @@ export default function ActiveInterviewPage() {
           </div>
 
           {/* 2-Minute Circular/Pill Countdown Timer */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 shadow-inner">
             <Clock className={`w-4 h-4 ${timeLeft <= 30 ? "text-red-400 animate-pulse" : "text-emerald-400"}`} />
-            <span className={`text-xs font-mono font-bold ${timeLeft <= 30 ? "text-red-400" : "text-slate-200"}`}>
+            <span className={`text-xs font-mono font-bold ${timeLeft <= 30 ? "text-red-400 animate-pulse" : "text-slate-200"}`}>
               {formatTime(timeLeft)}
             </span>
           </div>
@@ -150,8 +163,8 @@ export default function ActiveInterviewPage() {
           </p>
         </div>
 
-        {/* Answer Entry Area (Voice + Manual Text Box Fallback) */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-4">
+        {/* Answer Entry Area (Voice + Manual Text Box) */}
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
           <div className="flex justify-between items-center">
             <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Candidate Answer Representation
@@ -173,45 +186,23 @@ export default function ActiveInterviewPage() {
           <div className="flex justify-end">
             <button
               type="button"
-              disabled={submitting || loading}
+              disabled={submitting || loading || !userAnswer.trim()}
               onClick={handleAnswerSubmit}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 cursor-pointer"
             >
               {submitting ? "Evaluating Response..." : "Submit Answer"} 
               {questionCount >= 5 ? <ArrowRight className="w-4 h-4" /> : <Send className="w-4 h-4" />}
             </button>
           </div>
         </div>
-        {/* 1. AB Talks +50 Synergy Points Awarded Banner */}
-          <div className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/40 rounded-2xl p-4 flex items-center justify-between shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center text-white font-bold justify-center">
-                +50
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-white">AB Talks Synergy Points Awarded!</h4>
-                <p className="text-xs text-slate-400">Successfully completed the mock interview question/session.</p>
-              </div>
-            </div>
-            <span className="px-3 py-1 bg-indigo-600/30 border border-indigo-500/50 text-indigo-300 text-xs font-medium rounded-lg">
-              Unlocked
-            </span>
-          </div>
 
-          {/* 2. AI Ideal Answer vs Candidate Answer Comparison Panel */}
-          <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-5 space-y-3">
-            <h3 className="text-sm font-semibold text-indigo-400">🤖 AI Ideal Answer vs Your Answer</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
-                <span className="text-slate-400 font-semibold block mb-1">Your Response:</span>
-                <p className="text-slate-300">Your submitted or recorded voice response will display here.</p>
-              </div>
-              <div className="bg-indigo-950/30 p-3 rounded-lg border border-indigo-900/40">
-                <span className="text-indigo-300 font-semibold block mb-1">AI Best Practice / Ideal Answer:</span>
-                <p className="text-slate-300">Expert structured guideline and model answer framework generated by AI.</p>
-              </div>
-            </div>
+        {/* Live Answer Feedback Preview Box */}
+        {userAnswer.trim() && (
+          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 transition-all">
+            <span className="text-xs font-semibold text-indigo-400 block mb-1">🤖 Active Response Stream:</span>
+            <p className="text-xs text-slate-300 italic">{userAnswer}</p>
           </div>
+        )}
       </main>
 
       <Footer />

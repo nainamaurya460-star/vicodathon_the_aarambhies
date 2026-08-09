@@ -1,15 +1,26 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import QuestionTimer from "@/components/ui/QuestionTimer";
 import VoiceRecorder from "@/components/ui/VoiceRecorder";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
 import { Sparkles, ArrowRight, BrainCircuit } from "lucide-react";
+import VoiceRecorder from "@/components/ui/VoiceRecorder";
+import QuestionTimer from "@/components/ui/QuestionTimer"; // Added Timer Component
+import { Sparkles, Send, ArrowRight } from "lucide-react";
 
 export default function InterviewPage() {
   const router = useRouter();
+  const [config, setConfig] = useState<{ role?: string; topic?: string; seniority?: string } | null>(null);
+  const [question, setQuestion] = useState<string>("Initializing adaptive AI question...");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [questionCount, setQuestionCount] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes countdown timer per question
 
   // State Management
   const [question, setQuestion] = useState("Loading AI Interview Question...");
@@ -41,6 +52,17 @@ export default function InterviewPage() {
 
   // Fetch Next Question from Gemini API Route
   const fetchNextQuestion = async (config: any, previousAns: string) => {
+  // Timer Countdown Effect
+  useEffect(() => {
+    if (loading || submitting) return;
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [loading, submitting]);
+
+  const fetchNextQuestion = async (sessionConfig: any, previousAnswer: string) => {
+    setLoading(true);
     try {
       const res = await fetch("/api/interview/question", {
         method: "POST",
@@ -71,9 +93,25 @@ export default function InterviewPage() {
   const handleAnswerSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+      console.error("Adaptive question generation error:", err);
+      setQuestion(`In the context of ${sessionConfig.topic}, explain how you manage system scalability and edge cases.`);
+    } finally {
+      setLoading(false);
+      setTimeLeft(120); // Reset timer to 2 mins for new question
+    }
+  };
+
+  const handleAnswerSubmit = useCallback(async () => {
+    setSubmitting(true);
+
+    const answerToSubmit = userAnswer.trim() || "No response provided (Time Expired / Left Blank)";
 
     const existingHistory = JSON.parse(sessionStorage.getItem("qa_history") || "[]");
     const updatedHistory = [...existingHistory, { question, answer: currentAnswer }];
+    const updatedHistory = [
+      ...existingHistory,
+      { question: question, answer: answerToSubmit }
+    ];
     sessionStorage.setItem("qa_history", JSON.stringify(updatedHistory));
 
     if (questionCount >= totalQuestions) {
@@ -86,8 +124,20 @@ export default function InterviewPage() {
     }
   };
 
+    setUserAnswer("");
+    setQuestionCount((prev) => prev + 1);
+
+    await fetchNextQuestion(config, answerToSubmit);
+    setSubmitting(false);
+  }, [userAnswer, question, questionCount, config, router]);
+
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between">
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between relative overflow-hidden">
+      {/* High-Tech Background Glow Effects */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-cyan-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+      {/* Sticky High Z-Index Navbar */}
       <Navbar />
 
       {/* FIXED TOP PADDING: pt-32 ensures full clearance from fixed navbar */}
@@ -98,6 +148,14 @@ export default function InterviewPage() {
           <div className="space-y-1">
             <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
               {sessionConfig?.topic || "Technical Core"} • Question {questionCount} of {totalQuestions}
+      {/* Main Container with pt-24 Padding to prevent Header Overlap */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-24 pb-8 relative z-10 flex flex-col justify-center space-y-6">
+        
+        {/* Top Bar: Progress & Target Tech Stack */}
+        <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800 shadow-lg">
+          <div>
+            <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">
+              Question {questionCount} of 5
             </span>
             <p className="text-xs text-slate-400 mt-1">
               Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Software Engineer"}</span> ({sessionConfig?.seniority || "Mid-Level"})
@@ -110,6 +168,11 @@ export default function InterviewPage() {
 
         {/* Dynamic AI Question Card Display */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-4">
+        {/* Live Question Timer Component */}
+        <QuestionTimer timeLeft={timeLeft} onTimeUp={handleAnswerSubmit} />
+
+        {/* AI Question Box */}
+        <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-4">
           <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
             <BrainCircuit className="w-4 h-4 text-indigo-500" /> Active Interviewer Question
           </div>
@@ -120,6 +183,8 @@ export default function InterviewPage() {
 
         {/* Dual Voice & Manual Text Input Area */}
         <div className="space-y-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
+        {/* Candidate Answer Box & Controls */}
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
           <div className="flex justify-between items-center">
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
               Candidate Answer
@@ -148,6 +213,17 @@ export default function InterviewPage() {
               <>Submit Answer <ArrowRight className="w-4 h-4" /></>
             )}
           </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              disabled={submitting || loading || !userAnswer.trim()}
+              onClick={handleAnswerSubmit}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 cursor-pointer"
+            >
+              {submitting ? "Evaluating Response..." : "Submit Answer"} 
+              {questionCount >= 5 ? <ArrowRight className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </main>
 
