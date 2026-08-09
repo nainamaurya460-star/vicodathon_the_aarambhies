@@ -1,160 +1,150 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import QuestionTimer from "@/components/ui/QuestionTimer";
-import VoiceRecorder from "@/components/ui/VoiceRecorder";
+import StarBackground from "@/components/ui/StarBackground";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
-import { Sparkles, ArrowRight, BrainCircuit } from "lucide-react";
+import { FileText, Briefcase, UserCheck, Sparkles, ArrowRight } from "lucide-react";
 
-export default function InterviewPage() {
+export default function InterviewSetupPage() {
   const router = useRouter();
 
-  // State Management
-  const [question, setQuestion] = useState("Loading AI Interview Question...");
-  const [currentAnswer, setCurrentAnswer] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [questionCount, setQuestionCount] = useState(1);
-  const totalQuestions = 5;
+  const [role, setRole] = useState("Software Engineer");
+  const [seniority, setSeniority] = useState("Mid-Level");
+  const [topic, setTopic] = useState("Full Stack & System Architecture");
+  const [jdText, setJdText] = useState("");
+  const [resumeText, setResumeText] = useState("");
 
-  // Session Config Parameters
-  const [sessionConfig, setSessionConfig] = useState<{
-    role: string;
-    seniority: string;
-    topic: string;
-    jdText?: string;
-    resumeText?: string;
-  } | null>(null);
+  const handleStartInterview = (e: React.FormEvent) => {
+    e.preventDefault();
 
-  // Fetch Next Question from Gemini API Route
-  const fetchNextQuestion = useCallback(async (config: any, previousAns: string) => {
-    try {
-      const res = await fetch("/api/interview/question", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          role: config?.role,
-          seniority: config?.seniority,
-          topic: config?.topic,
-          jdText: config?.jdText,
-          resumeText: config?.resumeText,
-          previousAnswer: previousAns,
-        }),
-      });
+    // 1. Session Storage Config Package
+    const interviewConfig = {
+      role,
+      seniority,
+      topic,
+      jdText: jdText.trim(),
+      resumeText: resumeText.trim(),
+    };
 
-      const data = await res.json();
-      if (data?.question) {
-        setQuestion(data.question);
-      } else {
-        setQuestion("How do you handle error boundaries and asynchronous state management in production?");
-      }
-    } catch (err) {
-      console.error("Failed to fetch question:", err);
-      setQuestion("How do you handle error boundaries and asynchronous state management in production?");
-    }
-  }, []);
+    // Save Context for Interview Session
+    sessionStorage.setItem("active_interview_config", JSON.stringify(interviewConfig));
+    sessionStorage.removeItem("qa_history"); // Reset previous interview history
 
-  // Load Session Config & Initial Question
-  useEffect(() => {
-    const savedConfig = sessionStorage.getItem("active_interview_config");
-    if (savedConfig) {
-      const parsed = JSON.parse(savedConfig);
-      setSessionConfig(parsed);
-      fetchNextQuestion(parsed, "");
-    } else {
-      const defaultConfig = { role: "Software Engineer", seniority: "Mid-Level", topic: "Technical Core" };
-      setSessionConfig(defaultConfig);
-      fetchNextQuestion(defaultConfig, "");
-    }
-  }, [fetchNextQuestion]);
-
-  // Submit Answer & Move to Next Question/Report
-  const handleAnswerSubmit = useCallback(async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-
-    const answerToSubmit = currentAnswer.trim() || "No response provided (Time Expired / Left Blank)";
-    const existingHistory = JSON.parse(sessionStorage.getItem("qa_history") || "[]");
-    const updatedHistory = [...existingHistory, { question, answer: answerToSubmit }];
-    sessionStorage.setItem("qa_history", JSON.stringify(updatedHistory));
-
-    if (questionCount >= totalQuestions) {
-      router.push("/interview/report");
-    } else {
-      setQuestionCount((prev) => prev + 1);
-      setCurrentAnswer("");
-      await fetchNextQuestion(sessionConfig, answerToSubmit);
-      setIsSubmitting(false);
-    }
-  }, [isSubmitting, currentAnswer, question, questionCount, totalQuestions, router, sessionConfig, fetchNextQuestion]);
+    // Navigate to Interview Workspace
+    router.push("/interview");
+  };
 
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between relative overflow-hidden">
-      {/* Background Glow Effects */}
-      <div 
-        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-indigo-500/10 rounded-full pointer-events-none" 
-        style={{ width: '500px', height: '500px', filter: 'blur(120px)' }} 
-      />
-      <div 
-        className="absolute bottom-10 right-10 bg-cyan-500/10 rounded-full pointer-events-none" 
-        style={{ width: '350px', height: '350px', filter: 'blur(100px)' }} 
-      />
+    <div className="min-h-screen text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
+      {/* Dynamic Moving Stars Canvas Background */}
+      <StarBackground />
 
       <Navbar />
 
-      <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-32 pb-12 space-y-6 relative z-10">
-        <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-lg">
-          <div className="space-y-1">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
-              {sessionConfig?.topic || "Technical Core"} • Question {questionCount} of {totalQuestions}
-            </span>
-            <p className="text-xs text-slate-400 mt-1">
-              Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Software Engineer"}</span> ({sessionConfig?.seniority || "Mid-Level"})
-            </p>
-          </div>
-
-          <QuestionTimer key={questionCount} durationInSeconds={120} onTimeUp={handleAnswerSubmit} />
+      <main className="flex-1 max-w-4xl mx-auto w-full p-4 md:p-8 pt-28 pb-16 relative z-10 space-y-8">
+        
+        {/* Page Title Header */}
+        <div className="text-center space-y-3">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5" /> AI Interview Setup
+          </span>
+          <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
+            Configure Your Mock Interview
+          </h1>
+          <p className="text-sm text-slate-400 max-w-xl mx-auto">
+            Provide your Target Role, Job Description, and Resume to enable context-aware real-time questions.
+          </p>
         </div>
 
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-4">
-          <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-            <BrainCircuit className="w-4 h-4 text-indigo-500" /> Active Interviewer Question
-          </div>
-          <h2 className="text-xl md:text-2xl font-semibold text-white leading-relaxed">
-            "{question}"
-          </h2>
-        </div>
+        {/* Glassmorphism Container Card */}
+        <form 
+          onSubmit={handleStartInterview}
+          className="bg-slate-900/40 border border-slate-700/50 backdrop-blur-xl rounded-3xl p-6 md:p-10 shadow-[0_0_50px_rgba(79,70,229,0.15)] space-y-6"
+        >
+          {/* Target Role & Seniority Options */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-indigo-400" /> Target Role
+              </label>
+              <input
+                type="text"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                placeholder="e.g. Frontend Engineer, Fullstack Developer"
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all backdrop-blur-md"
+                required
+              />
+            </div>
 
-        <div className="space-y-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
-          <div className="flex justify-between items-center">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-cyan-400" /> Seniority Level
+              </label>
+              <select
+                value={seniority}
+                onChange={(e) => setSeniority(e.target.value)}
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all backdrop-blur-md"
+              >
+                <option value="Junior">Junior (0-2 Years)</option>
+                <option value="Mid-Level">Mid-Level (2-5 Years)</option>
+                <option value="Senior">Senior (5+ Years)</option>
+                <option value="Lead/Architect">Tech Lead / Architect</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Topic Focus */}
+          <div className="space-y-2">
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Candidate Answer
+              Primary Technical Focus Area
             </label>
-            <VoiceRecorder onTranscriptChange={(text) => setCurrentAnswer(text)} />
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="e.g. React, Node.js, System Design, Data Structures"
+              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all backdrop-blur-md"
+              required
+            />
           </div>
 
-          <textarea
-            value={currentAnswer}
-            onChange={(e) => setCurrentAnswer(e.target.value)}
-            placeholder="Your voice transcription will stream here automatically. You can also edit or type manually..."
-            className="w-full h-36 bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder:text-slate-600"
-          />
+          {/* Job Description Text */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Briefcase className="w-4 h-4 text-cyan-400" /> Job Description (Optional)
+            </label>
+            <textarea
+              value={jdText}
+              onChange={(e) => setJdText(e.target.value)}
+              placeholder="Paste the Job Description (JD) here so the AI asks questions matching job requirements..."
+              className="w-full h-28 bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all resize-none backdrop-blur-md placeholder:text-slate-600"
+            />
+          </div>
 
+          {/* Candidate Resume Context */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <FileText className="w-4 h-4 text-emerald-400" /> Resume / Experience Context (Optional)
+            </label>
+            <textarea
+              value={resumeText}
+              onChange={(e) => setResumeText(e.target.value)}
+              placeholder="Paste your key projects, tech stack, and experience from your resume here to enable personalized cross-examination..."
+              className="w-full h-32 bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all resize-none backdrop-blur-md placeholder:text-slate-600"
+            />
+          </div>
+
+          {/* Start Interview Action Button */}
           <button
-            onClick={handleAnswerSubmit}
-            disabled={isSubmitting}
-            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 cursor-pointer"
+            type="submit"
+            className="w-full py-4 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_25px_rgba(79,70,229,0.4)] cursor-pointer text-sm tracking-wide"
           >
-            {isSubmitting ? (
-              <>Evaluating & Loading Next Question...</>
-            ) : questionCount === totalQuestions ? (
-              <>Finish Interview & View Scorecard <Sparkles className="w-4 h-4" /></>
-            ) : (
-              <>Submit Answer <ArrowRight className="w-4 h-4" /></>
-            )}
+            Launch Contextual AI Interview <ArrowRight className="w-4 h-4" />
           </button>
-        </div>
+        </form>
       </main>
 
       <Footer />
