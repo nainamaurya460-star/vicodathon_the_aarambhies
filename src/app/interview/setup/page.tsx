@@ -1,114 +1,166 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import StarBackground from "@/components/ui/StarBackground";
 import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/ui/Footer";
+import { FileText, Briefcase, UserCheck, Sparkles, ArrowRight } from "lucide-react";
 
-const rounds = [
-  { id: "technical", name: "Technical Core", desc: "Data Structures, System Design & Coding Concepts" },
-  { id: "behavioral", name: "Behavioral & HR", desc: "Past experiences, teamwork, and situational questions" },
-  { id: "system-design", name: "System Architecture", desc: "Scalability, Databases, and API Design" },
-  { id: "mixed", name: "Full Mock Round", desc: "A realistic mix of technical and situational prompts" },
-];
-
-export default function SetupPage() {
+export default function InterviewSetupPage() {
   const router = useRouter();
-  const [selectedRound, setSelectedRound] = useState("technical");
+
   const [role, setRole] = useState("Software Engineer");
   const [seniority, setSeniority] = useState("Mid-Level");
+  const [topic, setTopic] = useState("Full Stack & System Architecture");
+  const [jdText, setJdText] = useState("");
+  const [resumeText, setResumeText] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Clear previous interview state when loading setup page
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("qa_history");
-      sessionStorage.removeItem("active_interview_config");
-    }
-  }, []);
-
-  const handleStart = (e: React.FormEvent) => {
+  const handleStartInterview = (e: React.FormEvent) => {
     e.preventDefault();
-    const config = { role, seniority, topic: selectedRound };
-    sessionStorage.setItem("active_interview_config", JSON.stringify(config));
-    router.push("/interview");
+    setLoading(true);
+
+    try {
+      // 1. Session Storage Config Package
+      const interviewConfig = {
+        role,
+        seniority,
+        topic,
+        jdText: jdText.trim(),
+        resumeText: resumeText.trim(),
+      };
+
+      // Save Context for Interview Session
+      sessionStorage.setItem("active_interview_config", JSON.stringify(interviewConfig));
+      sessionStorage.removeItem("qa_history"); // Reset previous interview history
+
+      // Navigate to Interview Workspace Room
+      router.push("/interview/room");
+    } catch (err) {
+      console.error("Failed to save config:", err);
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col" suppressHydrationWarning>
+    <div className="min-h-screen text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
+      {/* Dynamic Moving Stars Canvas Background */}
+      <StarBackground />
+
       <Navbar />
-      <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-28 pb-16 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-2">Configure Your Practice Session</h1>
-          <p className="text-sm text-slate-400">Select your target role and evaluation domain to get started.</p>
+
+      <main className="flex-1 max-w-4xl mx-auto w-full p-4 md:p-8 pt-28 pb-16 relative z-10 space-y-8">
+        
+        {/* Page Title Header */}
+        <div className="text-center space-y-3">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5" /> AI Interview Setup
+          </span>
+          <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">
+            Configure Your Mock Interview
+          </h1>
+          <p className="text-sm text-slate-400 max-w-xl mx-auto">
+            Provide your Target Role, Job Description, and Resume to enable context-aware real-time questions.
+          </p>
         </div>
 
-        <form onSubmit={handleStart} className="space-y-6" suppressHydrationWarning>
-          <div className="space-y-3">
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Select Interview Domain</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {rounds.map((r) => {
-                const isSelected = selectedRound === r.id;
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    suppressHydrationWarning
-                    onClick={() => setSelectedRound(r.id)}
-                    className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
-                      isSelected
-                        ? "border-indigo-500 bg-indigo-500/10 text-white shadow-lg shadow-indigo-500/10"
-                        : "border-slate-800 bg-slate-900/50 hover:border-slate-700 text-slate-300"
-                    }`}
-                  >
-                    <div>
-                      <h3 className="font-semibold text-sm mb-1">{r.name}</h3>
-                      <p className="text-xs text-slate-400">{r.desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Glassmorphism Container Card */}
+        <form 
+          onSubmit={handleStartInterview}
+          className="bg-slate-900/40 border border-slate-700/50 backdrop-blur-xl rounded-3xl p-6 md:p-10 shadow-[0_0_50px_rgba(79,70,229,0.15)] space-y-6"
+        >
+          {/* Target Role & Seniority Options */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Target Role</label>
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-indigo-400" /> Target Role
+              </label>
               <input
                 type="text"
                 value={role}
-                suppressHydrationWarning
                 onChange={(e) => setRole(e.target.value)}
-                placeholder="e.g. Frontend Developer, HR Manager"
+                placeholder="e.g. Frontend Engineer, Fullstack Developer"
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all backdrop-blur-md"
                 required
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Seniority Level</label>
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-cyan-400" /> Seniority Level
+              </label>
               <select
                 value={seniority}
-                suppressHydrationWarning
                 onChange={(e) => setSeniority(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all backdrop-blur-md"
               >
-                <option value="Junior / Entry-Level">Junior / Entry-Level</option>
-                <option value="Mid-Level">Mid-Level</option>
-                <option value="Senior / Lead">Senior / Lead</option>
+                <option value="Junior">Junior (0-2 Years)</option>
+                <option value="Mid-Level">Mid-Level (2-5 Years)</option>
+                <option value="Senior">Senior (5+ Years)</option>
+                <option value="Lead/Architect">Tech Lead / Architect</option>
               </select>
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              suppressHydrationWarning
-              className="w-full py-3.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.99]"
-            >
-              Start Practice Round
-            </button>
+          {/* Topic Focus */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              Primary Technical Focus Area
+            </label>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="e.g. React, Node.js, System Design, Data Structures"
+              className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all backdrop-blur-md"
+              required
+            />
           </div>
+
+          {/* Job Description Text */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <Briefcase className="w-4 h-4 text-cyan-400" /> Job Description (Optional)
+            </label>
+            <textarea
+              value={jdText}
+              onChange={(e) => setJdText(e.target.value)}
+              placeholder="Paste the Job Description (JD) here so the AI asks questions matching job requirements..."
+              className="w-full h-28 bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all resize-none backdrop-blur-md placeholder:text-slate-600"
+            />
+          </div>
+
+          {/* Candidate Resume Context */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <FileText className="w-4 h-4 text-emerald-400" /> Resume / Experience Context (Optional)
+            </label>
+            <textarea
+              value={resumeText}
+              onChange={(e) => setResumeText(e.target.value)}
+              placeholder="Paste your key projects, tech stack, and experience from your resume here to enable personalized cross-examination..."
+              className="w-full h-32 bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-sm text-white focus:outline-none focus:border-indigo-500/80 transition-all resize-none backdrop-blur-md placeholder:text-slate-600"
+            />
+          </div>
+
+          {/* Start Interview Action Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{ background: "linear-gradient(to right, #4f46e5, #0891b2)" }}
+            className="w-full py-4 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_0_25px_rgba(79,70,229,0.4)] cursor-pointer text-sm tracking-wide disabled:opacity-50 hover:opacity-90"
+          >
+            {loading ? (
+              "Initializing Session..."
+            ) : (
+              <>Launch Contextual AI Interview <ArrowRight className="w-4 h-4" /></>
+            )}
+          </button>
         </form>
       </main>
+
+      <Footer />
     </div>
   );
 }
