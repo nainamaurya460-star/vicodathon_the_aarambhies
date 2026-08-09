@@ -5,18 +5,22 @@ import { useRouter } from "next/navigation";
 import StarBackground from "@/components/ui/StarBackground";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
-import { Mic, MicOff, Sparkles, Loader2 } from "lucide-react";
+import { Mic, MicOff, Sparkles, Loader2, ArrowRight, CheckCircle2, MessageSquare } from "lucide-react";
 
 export default function InterviewRoomPage() {
   const router = useRouter();
   const [messages, setMessages] = useState<Array<{ sender: "ai" | "user"; text: string }>>([]);
   const [isListening, setIsListening] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [qaHistory, setQaHistory] = useState<Array<{ question: string; answer: string }>>([]);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [qaHistory, setQaHistory] = useState<Array<{ question: string; answer: string; score: number }>>([]);
   const [setupConfig, setSetupConfig] = useState<any>(null);
 
+  // Pop-up Modal State
+  const [showNextModal, setShowNextModal] = useState(false);
+  const [nextQuestion, setNextQuestion] = useState("");
+  const [lastFeedback, setLastFeedback] = useState("");
+
   useEffect(() => {
-    // Session Storage se setup details read karein
     const storedSetup = sessionStorage.getItem("interview_setup");
     const config = storedSetup
       ? JSON.parse(storedSetup)
@@ -30,63 +34,70 @@ export default function InterviewRoomPage() {
 
     setSetupConfig(config);
 
-    // Context based first question trigger
-    generateInitialQuestion(config);
+    const initialQ = `Hello! Welcome to your ${config.round} for the ${config.role} position. Based on your domain focus (${config.jd || config.role}), can you briefly walk me through your technical experience and key skills?`;
+
+    setMessages([{ sender: "ai", text: initialQ }]);
   }, []);
 
-  const generateInitialQuestion = async (config: any) => {
-    setIsGenerating(true);
-    const initialPrompt = `Welcome candidate to the interview. Ask the first distinct question tailored for Role: ${config.role}, Level: ${config.level}, Round: ${config.round}. Job Details: ${config.jd}. Keep it single-question format.`;
-    
-    // Static contextual starting fallback matching selected round
-    const defaultStart = `Hello! Welcome to your ${config.round} for the ${config.role} position. Let us begin: Based on your domain focus (${config.jd || config.role}), can you briefly walk me through your technical experience and key skills?`;
-    
-    setMessages([
-      {
-        sender: "ai",
-        text: defaultStart,
-      },
-    ]);
-    setIsGenerating(false);
-  };
-
-  const handleSpeechAnswer = async (spokenText: string) => {
+  const handleSpeechAnswer = (spokenText: string) => {
     if (!spokenText.trim()) return;
 
+    // 1. Validation for extremely short / invalid answers
+    if (spokenText.trim().split(" ").length < 3) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: "user", text: spokenText },
+        {
+          sender: "ai",
+          text: "Could you please elaborate a bit more on your answer? That response was too short to evaluate your technical knowledge properly.",
+        },
+      ]);
+      return;
+    }
+
+    // Show user answer in chat
+    setMessages((prev) => [...prev, { sender: "user", text: spokenText }]);
+    setIsEvaluating(true);
+
     const currentQuestion = messages[messages.length - 1]?.text || "Interview Question";
-    const updatedHistory = [...qaHistory, { question: currentQuestion, answer: spokenText }];
+    const roundType = setupConfig?.round || "Technical Assessment";
+
+    // 2. Simple Answer Evaluation & Dynamic Compliment Logic
+    let score = Math.min(95, Math.max(65, spokenText.length * 2 + 50));
+    let compliment = "Good response!";
+    if (spokenText.toLowerCase().includes("react") || spokenText.toLowerCase().includes("state") || spokenText.toLowerCase().includes("api")) {
+      compliment = "Excellent points highlighted regarding your core stack!";
+      score += 5;
+    } else {
+      compliment = "Thank you for sharing your experience.";
+    }
+
+    // Save to history for Scorecard Report
+    const updatedHistory = [...qaHistory, { question: currentQuestion, answer: spokenText, score }];
     setQaHistory(updatedHistory);
     sessionStorage.setItem("qa_history", JSON.stringify(updatedHistory));
 
-    // Show user answer in UI
-    setMessages((prev) => [...prev, { sender: "user", text: spokenText }]);
-    setIsGenerating(true);
-
-    // Setup Context के आधार पर Agla Question Generate करना
-    const roundType = setupConfig?.round || "Technical Assessment";
-    const roleTitle = setupConfig?.role || "Software Developer";
-
-    let nextQuestionText = "";
-
-    // Round-Specific Dynamic Next Question Logic
-    if (qaHistory.length === 0) {
-      if (roundType.includes("Behavioral") || roundType.includes("HR")) {
-        nextQuestionText = `Thank you. For a ${roundType} scenario, describe a challenging problem you faced in a recent project and how you resolved it with your team.`;
-      } else if (roundType.includes("System Design")) {
-        nextQuestionText = `Good response. Moving to system design for a ${roleTitle}: How would you architecture high availability and caching in a web application?`;
-      } else {
-        nextQuestionText = `Great. Let's move to core technical concepts: How do you handle error handling, performance optimization, and async state updates in your projects?`;
-      }
-    } else if (qaHistory.length === 1) {
-      nextQuestionText = `Understood. Next question: How do you ensure code scalability, testing, and proper security best practices before deploying to production?`;
+    // Determine Next Question based on count
+    let upcomingQ = "";
+    if (updatedHistory.length === 1) {
+      upcomingQ = `How do you handle error handling, performance optimization, and async state updates in your projects?`;
+    } else if (updatedHistory.length === 2) {
+      upcomingQ = `What strategies do you use for component modularity, system scalability, and code review best practices?`;
     } else {
-      nextQuestionText = `Thank you! You have completed all key evaluation questions for this ${roundType} session. Click 'End & Evaluate' above to view your detailed performance report.`;
+      upcomingQ = `You have completed all primary questions for this ${roundType} session! Click 'End & Evaluate' to view your full scorecard.`;
     }
 
     setTimeout(() => {
-      setMessages((prev) => [...prev, { sender: "ai", text: nextQuestionText }]);
-      setIsGenerating(false);
-    }, 1000);
+      setIsEvaluating(false);
+      setLastFeedback(compliment);
+      setNextQuestion(upcomingQ);
+
+      // Append AI feedback in chat
+      setMessages((prev) => [...prev, { sender: "ai", text: `${compliment} Let's proceed.` }]);
+
+      // Trigger Pop-up Modal for Next Question
+      setShowNextModal(true);
+    }, 1200);
   };
 
   const toggleMic = () => {
@@ -113,6 +124,13 @@ export default function InterviewRoomPage() {
     }
   };
 
+  const proceedToNextQuestion = () => {
+    setShowNextModal(false);
+    if (nextQuestion) {
+      setMessages((prev) => [...prev, { sender: "ai", text: nextQuestion }]);
+    }
+  };
+
   return (
     <div className="min-h-screen text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
       <StarBackground />
@@ -120,7 +138,7 @@ export default function InterviewRoomPage() {
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-28 pb-12 relative z-10 flex flex-col justify-between space-y-6">
         
-        {/* Top Header & End Button */}
+        {/* Top Header */}
         <div className="flex items-center justify-between bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 p-4 rounded-2xl shadow-xl">
           <div>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -138,8 +156,8 @@ export default function InterviewRoomPage() {
           </button>
         </div>
 
-        {/* Chat History Container (Exact UI Styling) */}
-        <div className="flex-1 bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 overflow-y-auto space-y-4 max-h-[520px] shadow-2xl">
+        {/* Chat History */}
+        <div className="flex-1 bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 overflow-y-auto space-y-4 max-h-[500px] shadow-2xl">
           {messages.map((msg, idx) => (
             <div
               key={idx}
@@ -157,10 +175,10 @@ export default function InterviewRoomPage() {
             </div>
           ))}
 
-          {isGenerating && (
+          {isEvaluating && (
             <div className="flex justify-start">
               <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-xs text-indigo-400 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" /> Generating round-specific evaluation question...
+                <Loader2 className="w-4 h-4 animate-spin" /> Evaluating response & scoring performance...
               </div>
             </div>
           )}
@@ -170,7 +188,7 @@ export default function InterviewRoomPage() {
         <div className="bg-slate-900/40 backdrop-blur-xl p-8 rounded-2xl border border-slate-700/50 flex flex-col items-center justify-center space-y-3 shadow-2xl">
           <button
             onClick={toggleMic}
-            disabled={isGenerating}
+            disabled={isEvaluating || showNextModal}
             className={`w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border ${
               isListening
                 ? "bg-rose-600/90 border-rose-400 animate-pulse ring-8 ring-rose-500/20"
@@ -189,6 +207,37 @@ export default function InterviewRoomPage() {
         </div>
 
       </main>
+
+      {/* 🚀 Next Question Modal Pop-up */}
+      {showNextModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-indigo-500/40 rounded-2xl p-6 md:p-8 max-w-lg w-full shadow-2xl space-y-6 text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-indigo-500 to-emerald-500" />
+            
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Answer Evaluated
+            </div>
+
+            <p className="text-sm text-indigo-300 italic font-medium">"{lastFeedback}"</p>
+
+            <div className="bg-slate-950/70 border border-slate-800 p-4 rounded-xl text-left space-y-2">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-cyan-400" /> Next Question:
+              </span>
+              <p className="text-sm font-semibold text-slate-100 leading-relaxed">{nextQuestion}</p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={proceedToNextQuestion}
+                className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all"
+              >
+                Proceed to Answer <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
