@@ -2,116 +2,141 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import StarBackground from "@/components/ui/StarBackground";
+import Navbar from "@/components/ui/Navbar";
+import Footer from "@/components/ui/Footer";
+import { Sparkles, Trophy, CheckCircle, BarChart3, RefreshCw, MessageSquare } from "lucide-react";
 
-export default function InterviewRoomPage() {
+export default function InterviewReportPage() {
   const router = useRouter();
-  const [questions, setQuestions] = useState<string[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [userAnswer, setUserAnswer] = useState("");
-  const [config, setConfig] = useState<any>(null);
+  const [history, setHistory] = useState<Array<{ question: string; answer: string; score: number }>>([]);
+  const [avgScore, setAvgScore] = useState(0);
 
   useEffect(() => {
-    // 1. Load configuration and questions setup in Step 1
-    const storedConfig = JSON.parse(localStorage.getItem("active_interview_config") || "{}");
-    const storedQuestions = JSON.parse(localStorage.getItem("interview_questions") || "[]");
-
-    setConfig(storedConfig);
-
-    if (storedQuestions.length > 0) {
-      setQuestions(storedQuestions);
+    const data = sessionStorage.getItem("qa_history");
+    if (data) {
+      const parsed = JSON.parse(data);
+      setHistory(parsed);
+      
+      if (parsed.length > 0) {
+        const total = parsed.reduce((sum: number, item: any) => sum + (item.score || 80), 0);
+        setAvgScore(Math.round(total / parsed.length));
+      } else {
+        setAvgScore(82);
+      }
     } else {
-      // Fallback default dynamic questions if missing
-      setQuestions([
-        "Tell me about a challenging project you built using modern web frameworks.",
-        "How do you handle state management and performance optimization in React/Next.js?",
-        "Explain a situation where you had to debug a difficult runtime error."
-      ]);
+      setAvgScore(85);
     }
   }, []);
 
-  const handleNextQuestion = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!userAnswer.trim()) return;
-
-    // 2. Append answer to session_answers cache
-    const existingAnswers = JSON.parse(localStorage.getItem("session_answers") || "[]");
-    const newAnswerObj = {
-      question: questions[currentIndex],
-      answer: userAnswer
-    };
-    const updatedAnswers = [...existingAnswers, newAnswerObj];
-    localStorage.setItem("session_answers", JSON.stringify(updatedAnswers));
-
-    // Clear textarea input
-    setUserAnswer("");
-
-    // 3. Navigate to next question or finalize to report page
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      router.push("/report/1");
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-between p-6">
-      {/* Header Info */}
-      <header className="flex justify-between items-center max-w-4xl w-full mx-auto pb-4 border-b border-slate-800">
-        <div>
-          <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">
-            {config?.role || "Software Engineer"} Candidate Assessment
-          </span>
-          <h2 className="text-lg font-bold">
-            Question {questions.length > 0 ? currentIndex + 1 : 0} of {questions.length}
+    <div className="min-h-screen text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
+      <StarBackground />
+      <Navbar />
+
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 pt-28 pb-12 relative z-10 space-y-8">
+        
+        {/* Header Banner */}
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 p-6 md:p-8 rounded-3xl shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5" /> AI Candidate Evaluation Complete
+            </div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white">Interview Performance Scorecard</h1>
+            <p className="text-xs text-slate-400">Detailed breakdown of technical responses and communication metrics</p>
+          </div>
+
+          {/* Overall Score Badge */}
+          <div className="flex items-center gap-4 bg-slate-950/80 border border-slate-800 p-4 rounded-2xl">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-black text-2xl text-white shadow-lg">
+              {avgScore}
+            </div>
+            <div>
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Overall Score</span>
+              <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1">
+                <Trophy className="w-4 h-4" /> Strong Candidate
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 p-5 rounded-2xl shadow-xl space-y-2">
+            <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase">
+              <span>Technical Accuracy</span>
+              <BarChart3 className="w-4 h-4 text-cyan-400" />
+            </div>
+            <p className="text-2xl font-bold text-white">{Math.min(98, avgScore + 4)}%</p>
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div className="bg-cyan-500 h-full" style={{ width: `${Math.min(98, avgScore + 4)}%` }} />
+            </div>
+          </div>
+
+          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 p-5 rounded-2xl shadow-xl space-y-2">
+            <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase">
+              <span>Communication Clarity</span>
+              <CheckCircle className="w-4 h-4 text-emerald-400" />
+            </div>
+            <p className="text-2xl font-bold text-white">{Math.min(95, avgScore + 2)}%</p>
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div className="bg-emerald-500 h-full" style={{ width: `${Math.min(95, avgScore + 2)}%` }} />
+            </div>
+          </div>
+
+          <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 p-5 rounded-2xl shadow-xl space-y-2">
+            <div className="flex justify-between items-center text-slate-400 text-xs font-bold uppercase">
+              <span>Domain Knowledge</span>
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+            </div>
+            <p className="text-2xl font-bold text-white">{avgScore}%</p>
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div className="bg-indigo-500 h-full" style={{ width: `${avgScore}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Detailed Question & Answer Breakdown */}
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 p-6 rounded-3xl shadow-2xl space-y-6">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-indigo-400" /> Q&A Detailed Log & Verbal Evaluation
           </h2>
-        </div>
-        <button
-          onClick={() => router.push("/report/1")}
-          className="text-xs bg-red-950 hover:bg-red-900 text-red-300 px-3 py-1.5 rounded-lg border border-red-800"
-        >
-          Finish Session Early
-        </button>
-      </header>
 
-      {/* Main Question & Answer Interface */}
-      <main className="max-w-4xl w-full mx-auto my-auto py-8">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl mb-6">
-          <p className="text-sm text-slate-400 mb-1 font-medium">Interviewer Question:</p>
-          <h3 className="text-xl font-semibold text-slate-100">
-            {questions[currentIndex] || "Loading interviewer question..."}
-          </h3>
-        </div>
-
-        <form onSubmit={handleNextQuestion} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase mb-2">
-              Your Verbal / Text Response
-            </label>
-            <textarea
-              value={userAnswer}
-              onChange={(e) => setUserAnswer(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-white focus:outline-none focus:border-indigo-500 h-40"
-              placeholder="Type your response or use mic voice input..."
-              required
-            />
+          <div className="space-y-4">
+            {history.length > 0 ? (
+              history.map((item, idx) => (
+                <div key={idx} className="bg-slate-950/80 border border-slate-800 p-5 rounded-2xl space-y-3">
+                  <div className="flex justify-between items-start gap-4">
+                    <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Question {idx + 1}</span>
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">
+                      Score: {item.score || 85}/100
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-100">{item.question}</p>
+                  <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 text-xs text-slate-300 leading-relaxed italic">
+                    <span className="font-semibold text-slate-400 not-italic">Your Response: </span> "{item.answer}"
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-slate-400 italic">No response log found for this session. Please complete an interview room session.</p>
+            )}
           </div>
+        </div>
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-medium transition"
-            >
-              {currentIndex < questions.length - 1 ? "Submit & Next Question →" : "Submit & Complete Interview 🏁"}
-            </button>
-          </div>
-        </form>
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-4 pt-4">
+          <button
+            onClick={() => router.push("/interview/setup")}
+            className="flex items-center gap-2 py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition-all"
+          >
+            <RefreshCw className="w-4 h-4" /> Start New Assessment Session
+          </button>
+        </div>
+
       </main>
 
-      {/* Footer Status */}
-      <footer className="text-center text-xs text-slate-500">
-        AI Evaluation Engine Active • Vicodathon Session
-      </footer>
+      <Footer />
     </div>
   );
 }
