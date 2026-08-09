@@ -1,26 +1,26 @@
-"use client";
 
-<<<<<<< HEAD
-import { useEffect, useState, useCallback } from "react";
-=======
 import React, { useState, useEffect } from "react";
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
+import { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect } from "react";
+
 import { useRouter } from "next/navigation";
 import QuestionTimer from "@/components/ui/QuestionTimer";
 import VoiceRecorder from "@/components/ui/VoiceRecorder";
 import Navbar from "@/components/ui/Navbar";
-import Footer from "@/components/ui/Footer";
-<<<<<<< HEAD
+import Footer from "@/components/ui/Footer
+
+import { Sparkles, ArrowRight, BrainCircuit } from "lucide-react";
+
 import VoiceRecorder from "@/components/ui/VoiceRecorder";
 import QuestionTimer from "@/components/ui/QuestionTimer"; // Added Timer Component
 import { Sparkles, Send, ArrowRight } from "lucide-react";
-=======
+
 import { Sparkles, ArrowRight, BrainCircuit } from "lucide-react";
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
 
 export default function InterviewPage() {
   const router = useRouter();
-<<<<<<< HEAD
+
   const [config, setConfig] = useState<{ role?: string; topic?: string; seniority?: string } | null>(null);
   const [question, setQuestion] = useState<string>("Initializing adaptive AI question...");
   const [loading, setLoading] = useState(true);
@@ -28,8 +28,7 @@ export default function InterviewPage() {
   const [userAnswer, setUserAnswer] = useState("");
   const [questionCount, setQuestionCount] = useState(1);
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes countdown timer per question
-=======
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
 
   // State Management
   const [question, setQuestion] = useState("Loading AI Interview Question...");
@@ -37,6 +36,14 @@ export default function InterviewPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questionCount, setQuestionCount] = useState(1);
   const totalQuestions = 5;
+
+  // State Management
+  const [question, setQuestion] = useState("Loading AI Interview Question...");
+  const [currentAnswer, setCurrentAnswer] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [questionCount, setQuestionCount] = useState(1);
+  const totalQuestions = 5;
+
 
   // Session Config Parameters
   const [sessionConfig, setSessionConfig] = useState<{
@@ -59,10 +66,15 @@ export default function InterviewPage() {
     }
   }, []);
 
-<<<<<<< HEAD
+
+
     fetchNextQuestion(parsed, "");
   }, [router]);
 
+
+
+  // Fetch Next Question from Gemini API Route
+  const fetchNextQuestion = async (config: any, previousAns: string) => {
   // Timer Countdown Effect
   useEffect(() => {
     if (loading || submitting) return;
@@ -74,10 +86,10 @@ export default function InterviewPage() {
 
   const fetchNextQuestion = async (sessionConfig: any, previousAnswer: string) => {
     setLoading(true);
-=======
+
   // Fetch Next Question from Gemini API Route
   const fetchNextQuestion = async (config: any, previousAns: string) => {
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
     try {
       const res = await fetch("/api/interview/question", {
         method: "POST",
@@ -99,7 +111,18 @@ export default function InterviewPage() {
         setQuestion("How do you handle error boundaries and asynchronous state management in production?");
       }
     } catch (err) {
-<<<<<<< HEAD
+
+
+      console.error("Failed to fetch question:", err);
+      setQuestion("How do you handle error boundaries and asynchronous state management in production?");
+    }
+  };
+
+  // Submit Answer
+  const handleAnswerSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
       console.error("Adaptive question generation error:", err);
       setQuestion(`In the context of ${sessionConfig.topic}, explain how you manage system scalability and edge cases.`);
     } finally {
@@ -110,7 +133,6 @@ export default function InterviewPage() {
 
   const handleAnswerSubmit = useCallback(async () => {
     setSubmitting(true);
-=======
       console.error("Failed to fetch question:", err);
       setQuestion("How do you handle error boundaries and asynchronous state management in production?");
     }
@@ -120,19 +142,22 @@ export default function InterviewPage() {
   const handleAnswerSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
 
     const answerToSubmit = userAnswer.trim() || "No response provided (Time Expired / Left Blank)";
 
     const existingHistory = JSON.parse(sessionStorage.getItem("qa_history") || "[]");
-<<<<<<< HEAD
+
+
+    const updatedHistory = [...existingHistory, { question, answer: currentAnswer }];
+
     const updatedHistory = [
       ...existingHistory,
       { question: question, answer: answerToSubmit }
     ];
-=======
+
     const updatedHistory = [...existingHistory, { question, answer: currentAnswer }];
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
     sessionStorage.setItem("qa_history", JSON.stringify(updatedHistory));
 
     if (questionCount >= totalQuestions) {
@@ -143,7 +168,10 @@ export default function InterviewPage() {
       await fetchNextQuestion(sessionConfig, currentAnswer);
       setIsSubmitting(false);
     }
-<<<<<<< HEAD
+
+
+  };
+
 
     setUserAnswer("");
     setQuestionCount((prev) => prev + 1);
@@ -153,7 +181,7 @@ export default function InterviewPage() {
   }, [userAnswer, question, questionCount, config, router]);
 =======
   };
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
 
   return (
     <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-between relative overflow-hidden">
@@ -164,16 +192,9 @@ export default function InterviewPage() {
       {/* Sticky High Z-Index Navbar */}
       <Navbar />
 
-<<<<<<< HEAD
-      {/* Main Container with pt-24 Padding to prevent Header Overlap */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-24 pb-8 relative z-10 flex flex-col justify-center space-y-6">
-        
-        {/* Top Bar: Progress & Target Tech Stack */}
-        <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800 shadow-lg">
-          <div>
-            <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">
-              Question {questionCount} of 5
-=======
+
+
+
       {/* FIXED TOP PADDING: pt-32 ensures full clearance from fixed navbar */}
       <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-32 pb-12 space-y-6">
         
@@ -182,7 +203,24 @@ export default function InterviewPage() {
           <div className="space-y-1">
             <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
               {sessionConfig?.topic || "Technical Core"} • Question {questionCount} of {totalQuestions}
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
+      {/* Main Container with pt-24 Padding to prevent Header Overlap */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-24 pb-8 relative z-10 flex flex-col justify-center space-y-6">
+        
+        {/* Top Bar: Progress & Target Tech Stack */}
+        <div className="flex items-center justify-between bg-slate-900/60 backdrop-blur-md p-4 rounded-xl border border-slate-800 shadow-lg">
+          <div>
+            <span className="text-xs text-indigo-400 font-semibold uppercase tracking-wider">
+              Question {questionCount} of 5
+      {/* FIXED TOP PADDING: pt-32 ensures full clearance from fixed navbar */}
+      <main className="flex-1 max-w-3xl mx-auto w-full p-4 md:p-8 pt-32 pb-12 space-y-6">
+        
+        {/* Workspace Header Bar */}
+        <div className="flex items-center justify-between bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-lg">
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
+              {sessionConfig?.topic || "Technical Core"} • Question {questionCount} of {totalQuestions}
+
             </span>
             <p className="text-xs text-slate-400 mt-1">
               Role: <span className="text-slate-200 font-semibold">{sessionConfig?.role || "Software Engineer"}</span> ({sessionConfig?.seniority || "Mid-Level"})
@@ -193,16 +231,19 @@ export default function InterviewPage() {
           <QuestionTimer durationInSeconds={120} onTimeUp={handleAnswerSubmit} />
         </div>
 
-<<<<<<< HEAD
+
+
+        {/* Dynamic AI Question Card Display */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-4">
+
         {/* Live Question Timer Component */}
         <QuestionTimer timeLeft={timeLeft} onTimeUp={handleAnswerSubmit} />
 
         {/* AI Question Box */}
         <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-4">
-=======
+
         {/* Dynamic AI Question Card Display */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-4">
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
           <div className="flex items-center gap-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
             <BrainCircuit className="w-4 h-4 text-indigo-500" /> Active Interviewer Question
           </div>
@@ -211,13 +252,14 @@ export default function InterviewPage() {
           </h2>
         </div>
 
-<<<<<<< HEAD
-        {/* Candidate Answer Box & Controls */}
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-=======
+
         {/* Dual Voice & Manual Text Input Area */}
         <div className="space-y-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
+        {/* Candidate Answer Box & Controls */}
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+        {/* Dual Voice & Manual Text Input Area */}
+        <div className="space-y-4 bg-slate-900/80 border border-slate-800 p-5 rounded-2xl">
           <div className="flex justify-between items-center">
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
               Candidate Answer
@@ -233,19 +275,8 @@ export default function InterviewPage() {
             className="w-full h-36 bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors resize-none placeholder:text-slate-600"
           />
 
-<<<<<<< HEAD
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={submitting || loading || !userAnswer.trim()}
-              onClick={handleAnswerSubmit}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 cursor-pointer"
-            >
-              {submitting ? "Evaluating Response..." : "Submit Answer"} 
-              {questionCount >= 5 ? <ArrowRight className="w-4 h-4" /> : <Send className="w-4 h-4" />}
-            </button>
-          </div>
-=======
+
+
           <button
             onClick={handleAnswerSubmit}
             disabled={isSubmitting}
@@ -259,7 +290,32 @@ export default function InterviewPage() {
               <>Submit Answer <ArrowRight className="w-4 h-4" /></>
             )}
           </button>
->>>>>>> 24f4327f8700bfeaf0cbba93994c1f2d894efedc
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              disabled={submitting || loading || !userAnswer.trim()}
+              onClick={handleAnswerSubmit}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 cursor-pointer"
+            >
+              {submitting ? "Evaluating Response..." : "Submit Answer"} 
+              {questionCount >= 5 ? <ArrowRight className="w-4 h-4" /> : <Send className="w-4 h-4" />}
+            </button>
+          </div>
+          <button
+            onClick={handleAnswerSubmit}
+            disabled={isSubmitting}
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25"
+          >
+            {isSubmitting ? (
+              <>Evaluating & Loading Next Question...</>
+            ) : questionCount === totalQuestions ? (
+              <>Finish Interview & View Scorecard <Sparkles className="w-4 h-4" /></>
+            ) : (
+              <>Submit Answer <ArrowRight className="w-4 h-4" /></>
+            )}
+          </button>
+
         </div>
       </main>
 
